@@ -1,0 +1,28 @@
+{
+    "en": {
+        "start-message": "Welcome to the TooGoodNotify bot! I'm here to help you get notified when TooGoodToGo magic bags are available. Use /help to see what I can do for you.",
+        "help-message": "Here's a list of commands you can use:\n\n- /start: Start interacting with the bot\n- /help: Show this help message\n- /settings: Configure your language and notification preferences\n- /register: Register your account to receive notifications\n- /notifications_start: Start receiving notifications\n- /notifications_stop: Stop receiving notifications\n- /status: Check your notification status\n- /about: Learn more about this bot",
+        "settings-message": "Settings:\nYou can configure your preferences here. Use /language to set your preferred language, and /notifications_start or /notifications_stop to control notifications.",
+        "register-message": "Please enter the email address you've used on our website to start receiving notifications.",
+        "register-message-success": "You're all set! Thank you for registering. You will now receive notifications for available magic bags.",
+        "register-message-failure": "Registration failed. Please check your email address or try again later.",
+        "notifications-start": "Notifications are now enabled! 🎉 You will receive alerts for TooGoodToGo offers in your area.",
+        "notifications-stop": "Notifications have been turned off. You will no longer receive alerts.",
+        "status-message": "📈 Here’s your current status:\n- Notifications: {status}\n- Registered Email: {email}",
+        "about-message": "ℹ️ This bot is designed to help you stay updated on TooGoodToGo magic bags. Powered by the TooGoodToGo API and a dedicated server to provide you with timely alerts!",
+        "language-message": "Your language has been set to {language}. Use /help if you need assistance."
+    },
+    "fr": {
+        "start-message": "Bienvenue sur le bot de notification TooGoodNotify! Je suis là pour vous aider à recevoir des notifications lorsque des offres TooGoodToGo sont disponibles. Utilisez /help pour voir ce que je peux faire pour vous.",
+        "help-message": "Voici une liste des commandes que vous pouvez utiliser :\n\n- /start : Démarrer l'interaction avec le bot\n- /help : Afficher ce message d'aide\n- /settings : Configurer vos préférences de langue et de notification\n- /register : Enregistrer votre compte pour recevoir des notifications\n- /notifications_start : Activer les notifications\n- /notifications_stop : Désactiver les notifications\n- /status : Vérifiez l'état de vos notifications\n- /about : En savoir plus sur ce bot",
+        "settings-message": "Paramètres :\nVous pouvez configurer vos préférences ici. Utilisez /language pour définir votre langue préférée et /notifications_start ou /notifications_stop pour contrôler les notifications.",
+        "register-message": "Veuillez entrer l'adresse e-mail que vous avez utilisée sur notre site Web pour commencer à recevoir des notifications.",
+        "register-message-success": "Merci ! Vous êtes inscrit(e) avec succès. Vous recevrez désormais des notifications pour les offres disponibles.",
+        "register-message-failure": "L'enregistrement a échoué. Veuillez vérifier votre adresse e-mail ou réessayer plus tard.",
+        "notifications-start": "Les notifications sont maintenant activées ! 🎉 Vous recevrez des alertes pour les offres TooGoodToGo dans votre région.",
+        "notifications-stop": "Les notifications sont désactivées. Vous ne recevrez plus d'alertes.",
+        "status-message": "📈 Voici votre statut actuel :\n- Notifications : {status}\n- E-mail enregistré : {email}",
+        "about-message": "ℹ️ Ce bot est conçu pour vous aider à rester informé(e) des offres TooGoodToGo. Alimenté par l'API TooGoodToGo et un serveur dédié pour vous fournir des alertes rapides !",
+        "language-message": "Votre langue a été définie sur {language}. Utilisez /help si vous avez besoin d'aide."
+    }
+}

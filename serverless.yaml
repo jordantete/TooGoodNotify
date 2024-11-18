@@ -1,0 +1,126 @@
+service: too-good-notify
+
+provider:
+  name: aws
+  runtime: python3.10
+  stage: dev
+  region: eu-west-3
+  versionFunctions: false
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - lambda:InvokeFunction
+            - events:PutRule
+            - events:DeleteRule
+            - events:ListRules
+            - events:PutTargets
+            - events:RemoveTargets
+            - events:ListTargetsByRule
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:${env:USER_AWS_ACCOUNT_ID}:table/UserNotifications"
+  environment:
+    SENDER_EMAIL: ${env:SENDER_EMAIL}
+    SENDER_EMAIL_PASSWORD: ${env:SENDER_EMAIL_PASSWORD}
+    USER_EMAIL: ${env:USER_EMAIL}
+    ACCESS_TOKEN: ${env:ACCESS_TOKEN}
+    REFRESH_TOKEN: ${env:REFRESH_TOKEN}
+    USER_ID: ${env:USER_ID}
+    TGTG_COOKIE: ${env:TGTG_COOKIE}
+    TELEGRAM_BOT_TOKEN: ${env:TELEGRAM_BOT_TOKEN}
+    TELEGRAM_CHAT_ID: ${env:TELEGRAM_CHAT_ID}
+    LAMBDA_MONITORING_ARN: ${env:LAMBDA_MONITORING_ARN}
+    USER_AWS_ACCOUNT_ID: ${env:USER_AWS_ACCOUNT_ID}
+    COOLDOWN_END_TIME: "" # Leave empty - Managed by the Scheduler class
+
+functions:
+  tooGoodNotifyScheduler:
+    name: too-good-notify-scheduler
+    handler: app.handlers.lambda_scheduler
+    layers:
+      - arn:aws:lambda:${self:provider.region}:${env:USER_AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
+    events:
+      - schedule: cron(*/3 10-19 ? * MON-SAT *)
+    timeout: 5 # seconds
+    memorySize: 128 # mb
+    description: Schedule the monitoring of TooGoodToGo items available
+
+  tooGoodNotifyMonitoring:
+      name: too-good-notify-monitoring
+      handler: app.handlers.tgtg_monitoring_handler
+      layers:
+        - arn:aws:lambda:${self:provider.region}:${env:USER_AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
+      events:
+        - eventBridge:
+            pattern:
+              source:
+                - aws.events
+              detail-type:
+                - Scheduled Event
+      timeout: 20 # seconds
+      memorySize: 256 # mb
+      description: Monitor new TooGoodToGo items available in my favorite stores
+
+  tooGoodNotifyTelegramWebhook:
+    name: too-good-notify-telegram-webhook
+    handler: app.handlers.telegram_webhook_handler
+    layers:
+      - arn:aws:lambda:${self:provider.region}:${env:USER_AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
+    events:
+      - http:
+          path: /
+          method: POST
+          cors: true
+    timeout: 30 # seconds
+    memorySize: 256 # mb
+    description: Webhook to trigger TooGoodToNotify Telegram Bot
+
+resources:
+  Resources:
+    UserNotifications:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UserNotifications
+        AttributeDefinitions:
+          - AttributeName: storeId
+            AttributeType: S
+          - AttributeName: lastNotificationDate
+            AttributeType: S
+        KeySchema:
+          - AttributeName: storeId
+            KeyType: HASH
+          - AttributeName: lastNotificationDate
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 10
+          WriteCapacityUnits: 10
+
+package:
+  individually: true
+  exclude:
+    - node_modules/**
+    - .vscode/**
+    - .git/**
+    - "*.pyc"
+    - "__pycache__/"
+    - requirements.txt
+
+plugins:
+  - serverless-python-requirements
+  - serverless-dotenv-plugin
+
+custom:
+  pythonRequirements:
+    dockerizePip: false
+    slim: true  
+    noDeploy: ['boto3', 'botocore']
