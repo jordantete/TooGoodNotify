@@ -29,6 +29,12 @@ provider:
             - dynamodb:DeleteItem
           Resource:
             - "arn:aws:dynamodb:${self:provider.region}:${env:USER_AWS_ACCOUNT_ID}:table/UserNotifications"
+        - Effect: Allow
+          Action:
+            - lambda:GetFunctionConfiguration
+            - lambda:UpdateFunctionConfiguration
+          Resource:
+            - ${env:LAMBDA_MONITORING_ARN}
   environment:
     SENDER_EMAIL: ${env:SENDER_EMAIL}
     SENDER_EMAIL_PASSWORD: ${env:SENDER_EMAIL_PASSWORD}
