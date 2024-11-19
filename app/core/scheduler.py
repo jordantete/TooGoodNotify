@@ -20,17 +20,31 @@ class Scheduler:
 
     def _is_in_cooldown(self) -> bool:
         """Check if the function is in a cooldown state."""
-        cooldown_end_time = os.getenv("COOLDOWN_END_TIME")
+        try:
+            response = self.lambda_client.get_function_configuration(FunctionName=self.lambda_arn)
+            env_vars = response.get('Environment', {}).get('Variables', {})
+            cooldown_end_time_str = env_vars.get('COOLDOWN_END_TIME')
+            
+            if not cooldown_end_time_str:
+                LOGGER.info("No cooldown end time set. Cooldown is not active.")
+                return False
+            
+            cooldown_end_time = datetime.fromisoformat(cooldown_end_time_str).replace(tzinfo=pytz.utc)
+            now_utc = datetime.now(pytz.utc)
+            LOGGER.info(f"cooldown_end_time: {cooldown_end_time}")
+            LOGGER.info(f"now_utc: {now_utc}")
 
-        if cooldown_end_time:
-            try:
-                if datetime.now(pytz.UTC) < datetime.fromisoformat(cooldown_end_time):
-                    LOGGER.info(f"Cooldown active until {cooldown_end_time}")
-                    return True
+            if now_utc < cooldown_end_time:
+                remaining_time = (cooldown_end_time - now_utc).total_seconds()
+                LOGGER.info(f"Cooldown is active. Remaining time: {remaining_time:.0f} seconds.")
+                return True
 
-            except ValueError as e:
-                LOGGER.error(f"Invalid cooldown end time format: {cooldown_end_time}. Error: {e}")
-        return False
+            LOGGER.info("Cooldown period has expired. Cooldown is not active.")
+            return False
+
+        except Exception as e:
+            LOGGER.error(f"Unexpected error while checking cooldown status: {e}")
+            return False
 
     def _convert_datetime_to_cron_expression(
         self, 
