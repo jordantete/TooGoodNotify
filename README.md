@@ -32,7 +32,7 @@
 
 3. **Configure Environment Variables in Conda**:
 
-To set multiple environment variables at once, use a `.env` file along with a script. This is faster and keeps your configuration organized.
+To set multiple environment variables at once, use a `.env` file. This is faster and keeps your configuration organized.
 
 At the root of the project, create a `.env` file and add the necessary environment variables:
 
@@ -49,20 +49,6 @@ At the root of the project, create a `.env` file and add the necessary environme
   TGTG_COOKIE=your_tgtg_cookie
   USER_AWS_ACCOUNT_ID=your_aws_user_account_id
   LAMBDA_MONITORING_ARN=lambda_arn
-  ```
-
-Execute the **load_env.sh** script:
-
-  ```sh
-  chmod +x load_env.sh
-  ./load_env.sh
-  ```
-
-After running the script, deactivate and reactivate your Conda environment to apply the changes:
-
-  ```sh
-  conda deactivate
-  conda activate too_good_notify_env 
   ```
 
 4. **Creating the Lambda Layer**:
