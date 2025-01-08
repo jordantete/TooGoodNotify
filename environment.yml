@@ -3,6 +3,10 @@ channels:
   - defaults
 dependencies:
   - python=3.10
+  - pytest
+  - pytest-cov
+  - pytest-mock
+  - pytest-asyncio
   - pip
   - pip:
     - boto3
@@ -13,3 +17,5 @@ dependencies:
     - python-dotenv
     - requests
     - tgtg
+    - pytest-freezegun
+    - freezegun

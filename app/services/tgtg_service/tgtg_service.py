@@ -36,12 +36,10 @@ class TgtgService:
             self.tgtg_client = TgtgClient(
                 access_token=self.access_token,
                 refresh_token=self.refresh_token,
-                user_id=self.user_id,
                 cookie=self.cookie,
                 user_agent=self.USER_AGENT,
                 device_type="IPHONE"
             )
-
         except Exception as e:
             raise TgtgLoginError("Unable to login with provided credentials.") from e
 

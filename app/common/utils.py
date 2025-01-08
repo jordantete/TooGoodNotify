@@ -73,6 +73,8 @@ class Utils:
             LOGGER.info(f"Telegram message sent successfully to chat_id: {chat_id}")
         except requests.RequestException as e:
             LOGGER.error(f"Failed to send Telegram message to chat_id: {chat_id}. Error: {e}")
+        except Exception as e:
+            LOGGER.error(f"Unexpected error while sending Telegram message: {e}")
 
     @staticmethod
     def ok_response():

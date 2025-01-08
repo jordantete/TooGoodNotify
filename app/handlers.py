@@ -1,4 +1,4 @@
-import asyncio, re
+import asyncio, re, json
 from typing import Any, Dict, Union
 from app.common.logger import LOGGER
 from app.core.scheduler import Scheduler
@@ -52,7 +52,9 @@ async def run_telegram_webhook(
     """Process the Telegram webhook event asynchronously."""
     LOGGER.info(f"Telegram Webhook triggered - event: {event}")
     try:
-        telegram_service = TelegramService()
+        scheduler = Scheduler()
+        monitoring_tgtg_service = MonitoringTgtgService(scheduler=scheduler)
+        telegram_service = TelegramService(monitoring_tgtg_service)
         await telegram_service.process_webhook(event)
         return Utils.ok_response()
     except Exception as e:
