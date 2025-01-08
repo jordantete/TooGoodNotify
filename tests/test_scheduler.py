@@ -15,7 +15,6 @@ class TestScheduler:
             return scheduler
 
     def test_is_in_cooldown_active(self, scheduler):
-        """Test cooldown check when cooldown is active."""
         future_time = datetime.now(pytz.utc) + timedelta(minutes=15)
         scheduler.lambda_client.get_function_configuration.return_value = {
             'Environment': {
@@ -27,7 +26,6 @@ class TestScheduler:
         assert scheduler._is_in_cooldown() is True
 
     def test_is_in_cooldown_expired(self, scheduler):
-        """Test cooldown check when cooldown has expired."""
         past_time = datetime.now(pytz.utc) - timedelta(minutes=15)
         scheduler.lambda_client.get_function_configuration.return_value = {
             'Environment': {
@@ -39,13 +37,11 @@ class TestScheduler:
         assert scheduler._is_in_cooldown() is False
 
     def test_convert_datetime_to_cron_expression(self, scheduler):
-        """Test conversion of datetime to CRON expression."""
         dt = datetime(2024, 3, 20, 14, 30, tzinfo=pytz.UTC)
         cron = scheduler._convert_datetime_to_cron_expression(dt)
         assert cron == "cron(30 14 20 3 ? 2024)"
 
     def test_list_scheduled_rules(self, scheduler):
-        """Test listing scheduled rules."""
         mock_rules = [{'Name': 'Rule1'}, {'Name': 'Rule2'}]
         scheduler.events_client.list_rules.return_value = {'Rules': mock_rules}
         rules = scheduler._list_scheduled_rules()
@@ -55,7 +51,6 @@ class TestScheduler:
         )
 
     def test_is_future_rule(self, scheduler):
-        """Test future rule check."""
         now = datetime.now(pytz.utc)
         future_time = now + timedelta(hours=1)
         rule_name = f"{SCHEDULE_RULE_NAME_PREFIX}{future_time.strftime('%Y%m%d%H%M')}"
@@ -63,7 +58,6 @@ class TestScheduler:
         assert scheduler._is_future_rule({'Name': rule_name}, now) is True
 
     def test_delete_past_rule(self, scheduler):
-        """Test deletion of past rules."""
         rule = {'Name': 'TestRule'}
         scheduler.events_client.list_targets_by_rule.return_value = {
             'Targets': [{'Id': 'Target1'}]
@@ -83,17 +77,14 @@ class TestScheduler:
         (20, None),                   # Outside windows
     ])
     def test_get_time_window(self, scheduler, current_hour, expected_window):
-        """Test time window determination."""
         assert scheduler._get_time_window(current_hour) == expected_window
 
     def test_calculate_next_invocation_time_sunday(self, scheduler):
-        """Test next invocation calculation on Sunday."""
         sunday = datetime(2024, 3, 24, 12, 0, tzinfo=pytz.UTC)  # A Sunday
         with freeze_time(sunday):
             assert scheduler._calculate_next_invocation_time() is None
 
     def test_activate_cooldown(self, scheduler):
-        """Test cooldown activation."""
         current_vars = {'EXISTING_VAR': 'value'}
         scheduler.lambda_client.get_function_configuration.return_value = {
             'Environment': {'Variables': current_vars}
@@ -108,13 +99,11 @@ class TestScheduler:
         assert 'EXISTING_VAR' in new_vars
 
     def test_schedule_next_invocation_with_cooldown(self, scheduler):
-        """Test scheduling when cooldown is active."""
         scheduler._is_in_cooldown = MagicMock(return_value=True)
         scheduler.schedule_next_invocation()
         scheduler.events_client.put_rule.assert_not_called()
 
     def test_schedule_next_invocation_with_existing_future_rule(self, scheduler):
-        """Test scheduling when future rule exists."""
         scheduler._is_in_cooldown = MagicMock(return_value=False)
         scheduler._has_future_invocation = MagicMock(return_value=True)
         

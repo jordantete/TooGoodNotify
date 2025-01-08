@@ -1,11 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
-from app.handlers import (
-    tgtg_monitoring_handler,
-    lambda_scheduler,
-    telegram_webhook_handler,
-    run_telegram_webhook
-)
+from app.handlers import tgtg_monitoring_handler, lambda_scheduler, run_telegram_webhook
 
 class TestHandlers:
     @pytest.fixture

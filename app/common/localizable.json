@@ -19,7 +19,8 @@
         "register-pending": "A verification email has been sent to your email address. Please click the link to authorize the update.",
         "register-success": "Your credentials have been successfully refreshed and updated!",
         "register-timeout": "The credential refresh process timed out. Please ensure you clicked the link in the verification email.",
-        "register-error": "An error occurred while refreshing credentials."
+        "register-error": "An error occurred while refreshing credentials.",
+        "unhandled-action": "Sorry, I didn't understand that action."
     },
     "fr": {
         "start-message": "Bienvenue sur le bot de notification TooGoodNotify! Je suis là pour vous aider à recevoir des notifications lorsque des offres TooGoodToGo sont disponibles. Utilisez /help pour voir ce que je peux faire pour vous.",
@@ -41,6 +42,7 @@
         "register-pending": "Un e-mail de vérification a été envoyé à votre adresse e-mail. Veuillez cliquer sur le lien pour autoriser la mise à jour.",
         "register-success": "Vos identifiants ont été rafraîchis et mis à jour avec succès !",
         "register-timeout": "Le processus de rafraîchissement des identifiants a expiré. Veuillez vérifier l'e-mail de vérification.",
-        "register-error": "Une erreur s'est produite lors du rafraîchissement des identifiants."
+        "register-error": "Une erreur s'est produite lors du rafraîchissement des identifiants.",
+        "unhandled-action": "Désolé, je n'ai pas compris cette action."
     }
 }

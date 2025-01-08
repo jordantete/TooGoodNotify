@@ -2,12 +2,7 @@ import pytest, pytz
 from datetime import datetime
 from unittest.mock import patch, MagicMock
 from app.services.tgtg_service.tgtg_service import TgtgService
-from app.services.tgtg_service.exceptions import (
-    TgtgLoginError,
-    TgtgAPIConnectionError,
-    TgtgAPIParsingError,
-    ForbiddenError,
-)
+from app.services.tgtg_service.exceptions import TgtgLoginError, TgtgAPIConnectionError, TgtgAPIParsingError, ForbiddenError
 from app.services.tgtg_service.models import ItemDetails
 
 class TestTgtgService:

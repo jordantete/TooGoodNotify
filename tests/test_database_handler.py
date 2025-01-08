@@ -1,8 +1,8 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from botocore.exceptions import ClientError
 from app.core.database_handler import DatabaseHandler
-from app.core.exceptions import DatabaseConnectionError, DatabaseQueryError
+from app.core.exceptions import DatabaseQueryError
 
 class TestDatabaseHandler:
     @pytest.fixture

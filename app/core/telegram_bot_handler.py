@@ -223,7 +223,7 @@ class TelegramBotHandler:
             await self._register_account_handler(update, context)
         else:
             LOGGER.warning(f"Unhandled callback data: {query.data}")
-            await context.bot.send_message(chat_id=query.message.chat_id, text="Sorry, I didn't understand that action.")
+            await context.bot.send_message(chat_id=query.message.chat_id, text=self._get_localized_text("unhandled-action"))
 
     def _get_localized_text(self, message_key: str) -> str:
         """Retrieve localized text based on the user's selected language."""
