@@ -1,10 +1,11 @@
-import json
+import json, asyncio
 from typing import Dict
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler
 from app.core.database_handler import DatabaseHandler
 from app.common.utils import Utils
 from app.common.logger import LOGGER
+from app.services.monitoring_tgtg_service import MonitoringTgtgService
 
 TELEGRAM_BOT_TOKEN = Utils.get_environment_variable("TELEGRAM_BOT_TOKEN")
 CALLBACK_DATA_START = "start"
@@ -19,7 +20,10 @@ LANGUAGE_OPTIONS = {"en": "English", "fr": "Français"}
 DEFAULT_LANGUAGE = "fr"
 
 class TelegramBotHandler:
-    def __init__(self):
+    def __init__(
+        self, 
+        monitoring_service: MonitoringTgtgService
+    ):
         LOGGER.info("Initializing TelegramBotHandler")
         self.application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
         self.localizable_strings = Utils.load_localizable_data()
@@ -27,6 +31,7 @@ class TelegramBotHandler:
         self.chat_id = Utils.get_environment_variable("TELEGRAM_CHAT_ID")
         self.user_language = self._load_user_language()
         self.notifications_enabled = True
+        self.monitoring_service = monitoring_service
         self.register_handlers()
     
     def _load_user_language(self) -> str:
@@ -81,12 +86,42 @@ class TelegramBotHandler:
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup)
 
     async def _register_account_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        LOGGER.info("Register command received.")
-        ## Use user email defined as env var
-        #"register-message": "Please enter the email address you've used to create your TooGoodToGo account to start receiving notifications.",
+        LOGGER.info("Register command received. Refreshing TGTG credentials.")
+        chat_id = update.effective_chat.id
 
-        text = self._get_localized_text("register-message")
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+        try:
+            status = self.monitoring_service._retrieve_and_login()
+            if status == "FAILED":
+                await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-failed"))
+                return
+
+            await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-pending"))
+
+            timeout = 300  # 5 minutes
+            poll_interval = 10  # Check every 10 seconds
+            elapsed_time = 0
+
+            while elapsed_time < timeout:
+                if self.monitoring_service.check_credentials_ready():
+                    new_env_vars = {
+                        "ACCESS_TOKEN": self.monitoring_service.tgtg_service.access_token,
+                        "REFRESH_TOKEN": self.monitoring_service.tgtg_service.refresh_token,
+                        "USER_ID": self.monitoring_service.tgtg_service.user_id,
+                        "TGTG_COOKIE": self.monitoring_service.tgtg_service.cookie
+                    }
+                    self.monitoring_service.update_lambda_env_vars(new_env_vars)
+
+                    await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-success"))
+                    return
+
+                await asyncio.sleep(poll_interval)
+                elapsed_time += poll_interval
+
+            await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-timeout"))
+
+        except Exception as e:
+            LOGGER.error(f"Error during registration process: {e}")
+            await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-error"))
 
     async def _notifications_start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Notifications start command received.")

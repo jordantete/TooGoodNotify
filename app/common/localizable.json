@@ -19,7 +19,12 @@
         "command_notifications_start": "Enable notifications",
         "command_notifications_stop": "Disable notifications",
         "command_status": "Check your bot status",
-        "command_about": "Learn about this bot"
+        "command_about": "Learn about this bot",
+        "register-failed": "Failed to initiate credential refresh. Please try again.",
+        "register-pending": "A verification email has been sent to your email address. Please click the link to authorize the update.",
+        "register-success": "Your credentials have been successfully refreshed and updated!",
+        "register-timeout": "The credential refresh process timed out. Please ensure you clicked the link in the verification email.",
+        "register-error": "An error occurred while refreshing credentials."
     },
     "fr": {
         "start-message": "Bienvenue sur le bot de notification TooGoodNotify! Je suis là pour vous aider à recevoir des notifications lorsque des offres TooGoodToGo sont disponibles. Utilisez /help pour voir ce que je peux faire pour vous.",
@@ -41,6 +46,11 @@
         "command_notifications_start": "Activer les notifications",
         "command_notifications_stop": "Désactiver les notifications",
         "command_status": "Vérifiez le statut du bot",
-        "command_about": "En savoir plus sur ce bot"
+        "command_about": "En savoir plus sur ce bot",
+        "register-failed": "Échec de l'initialisation du rafraîchissement des identifiants. Veuillez réessayer.",
+        "register-pending": "Un e-mail de vérification a été envoyé à votre adresse e-mail. Veuillez cliquer sur le lien pour autoriser la mise à jour.",
+        "register-success": "Vos identifiants ont été rafraîchis et mis à jour avec succès !",
+        "register-timeout": "Le processus de rafraîchissement des identifiants a expiré. Veuillez vérifier l'e-mail de vérification.",
+        "register-error": "Une erreur s'est produite lors du rafraîchissement des identifiants."
     }
 }
