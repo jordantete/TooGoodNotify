@@ -85,7 +85,9 @@ class TestTelegramBotHandler:
         assert localized_text in call_args['text']
         assert isinstance(call_args['reply_markup'], InlineKeyboardMarkup)
         buttons = call_args['reply_markup'].inline_keyboard[0]
-        assert any(button.text in ["English", "Français"] for button in buttons)
+        button_texts = [button.text for button in buttons]
+        expected_texts = ["🇬🇧 English", "🇫🇷 Français"]
+        assert all(expected in button_texts for expected in expected_texts), f"Expected {expected_texts}, got {button_texts}"
 
     @pytest.mark.asyncio
     async def test_language_handler_process_callback(self, telegram_bot_handler, mock_update, mock_context):

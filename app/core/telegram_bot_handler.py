@@ -6,6 +6,7 @@ from app.core.database_handler import DatabaseHandler
 from app.common.utils import Utils
 from app.common.logger import LOGGER
 from app.services.monitoring_tgtg_service import MonitoringTgtgService
+from app.common.constants import WELCOME_GIF_URL
 
 TELEGRAM_BOT_TOKEN = Utils.get_environment_variable("TELEGRAM_BOT_TOKEN")
 CALLBACK_DATA_START = "start"
@@ -16,7 +17,7 @@ CALLBACK_DATA_ABOUT = "about"
 CALLBACK_DATA_LANGUAGE = "language"
 CALLBACK_NOTIFICATIONS_START = "notifications_start"
 CALLBACK_NOTIFICATIONS_STOP = "notifications_stop"
-LANGUAGE_OPTIONS = {"en": "English", "fr": "Français"}
+LANGUAGE_OPTIONS = {"en": "🇬🇧 English", "fr": "🇫🇷 Français"}
 DEFAULT_LANGUAGE = "fr"
 
 class TelegramBotHandler:
@@ -58,11 +59,13 @@ class TelegramBotHandler:
 
     async def _start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Start command received.")
+        await context.bot.send_animation(chat_id=update.effective_chat.id, animation=WELCOME_GIF_URL)
+
         text = self._get_localized_text("start-message")
         buttons = [
-            InlineKeyboardButton("Register", callback_data=CALLBACK_DATA_REGISTER),
-            InlineKeyboardButton("Help", callback_data=CALLBACK_DATA_HELP),
-            InlineKeyboardButton("Settings", callback_data=CALLBACK_DATA_SETTINGS)
+            InlineKeyboardButton("💡 Register", callback_data=CALLBACK_DATA_REGISTER),
+            InlineKeyboardButton("📖 Help", callback_data=CALLBACK_DATA_HELP),
+            InlineKeyboardButton("⚙️ Settings", callback_data=CALLBACK_DATA_SETTINGS)
         ]
         reply_markup = InlineKeyboardMarkup([buttons])
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup)
