@@ -1,6 +1,6 @@
 import json
 from typing import Dict
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler
 from app.core.database_handler import DatabaseHandler
 from app.common.utils import Utils
@@ -10,6 +10,11 @@ TELEGRAM_BOT_TOKEN = Utils.get_environment_variable("TELEGRAM_BOT_TOKEN")
 CALLBACK_DATA_START = "start"
 CALLBACK_DATA_HELP = "help"
 CALLBACK_DATA_SETTINGS = "settings"
+CALLBACK_DATA_REGISTER = "register"
+CALLBACK_DATA_ABOUT = "about"
+CALLBACK_DATA_LANGUAGE = "language"
+CALLBACK_NOTIFICATIONS_START = "notifications_start"
+CALLBACK_NOTIFICATIONS_STOP = "notifications_stop"
 LANGUAGE_OPTIONS = {"en": "English", "fr": "Français"}
 DEFAULT_LANGUAGE = "fr"
 
@@ -32,22 +37,25 @@ class TelegramBotHandler:
 
     def register_handlers(self) -> None:
         """Register Telegram command handlers."""
-        self.application.add_handler(CommandHandler('start', self._start_handler))
-        self.application.add_handler(CommandHandler('help', self._help_handler))
-        self.application.add_handler(CommandHandler('settings', self._settings_handler))
-        self.application.add_handler(CommandHandler('register', self._register_account_handler))
-        self.application.add_handler(CommandHandler('notifications_start', self._notifications_start_handler))
-        self.application.add_handler(CommandHandler('notifications_stop', self._notifications_stop_handler))
+        self.application.add_handler(CommandHandler(CALLBACK_DATA_START, self._start_handler))
+        self.application.add_handler(CommandHandler(CALLBACK_DATA_HELP, self._help_handler))
+        self.application.add_handler(CommandHandler(CALLBACK_DATA_SETTINGS, self._settings_handler))
+        self.application.add_handler(CommandHandler(CALLBACK_DATA_REGISTER, self._register_account_handler))
+        self.application.add_handler(CommandHandler(CALLBACK_NOTIFICATIONS_START, self._notifications_start_handler))
+        self.application.add_handler(CommandHandler(CALLBACK_NOTIFICATIONS_STOP, self._notifications_stop_handler))
         self.application.add_handler(CommandHandler('status', self._status_handler))
-        self.application.add_handler(CommandHandler('about', self._about_handler))
-        self.application.add_handler(CallbackQueryHandler(self._language_selection_handler, pattern="^language_"))
+        self.application.add_handler(CommandHandler(CALLBACK_DATA_ABOUT, self._about_handler))
+        self.application.add_handler(CommandHandler(CALLBACK_DATA_LANGUAGE, self._language_handler))
+
+        self.application.add_handler(CallbackQueryHandler(self._language_handler, pattern="^language_"))
+        self.application.add_handler(CallbackQueryHandler(self._callback_query_handler))
         LOGGER.info("Command handlers registered.")
 
     async def _start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Start command received.")
         text = self._get_localized_text("start-message")
         buttons = [
-            InlineKeyboardButton("Start", callback_data=CALLBACK_DATA_START),
+            InlineKeyboardButton("Register", callback_data=CALLBACK_DATA_REGISTER),
             InlineKeyboardButton("Help", callback_data=CALLBACK_DATA_HELP),
             InlineKeyboardButton("Settings", callback_data=CALLBACK_DATA_SETTINGS)
         ]
@@ -62,10 +70,21 @@ class TelegramBotHandler:
     async def _settings_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Settings command received.")
         text = self._get_localized_text("settings-message")
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+        buttons = [
+            [
+                InlineKeyboardButton("Enable Notifications", callback_data=CALLBACK_NOTIFICATIONS_START),
+                InlineKeyboardButton("Disable Notifications", callback_data=CALLBACK_NOTIFICATIONS_STOP)
+            ],
+            [InlineKeyboardButton("Change Language", callback_data="language_settings")]
+        ]
+        reply_markup = InlineKeyboardMarkup(buttons)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup)
 
     async def _register_account_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Register command received.")
+        ## Use user email defined as env var
+        #"register-message": "Please enter the email address you've used to create your TooGoodToGo account to start receiving notifications.",
+
         text = self._get_localized_text("register-message")
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
@@ -81,9 +100,11 @@ class TelegramBotHandler:
 
     async def _status_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Status command received.")
+        user_email = Utils.get_environment_variable("USER_EMAIL")
+
         status_text = self._get_localized_text("status-message").format(
             status="enabled" if self.notifications_enabled else "disabled",
-            email="user@example.com"  # TODO: Replace with actual user data
+            email=user_email
         )
         await context.bot.send_message(chat_id=update.effective_chat.id, text=status_text)
 
@@ -91,37 +112,106 @@ class TelegramBotHandler:
         LOGGER.info("About command received.")
         text = self._get_localized_text("about-message")
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    
+    async def _language_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle language selection initiation and processing."""
+        if update.callback_query:
+            await self._process_language_callback(update, context)
+        else:
+            await self._show_language_selection(update, context)
+    
+    async def _process_language_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Process callback data for language selection."""
+        query = update.callback_query
+        callback_data = query.data
 
-    async def _language_command_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Command to initiate language selection."""
-        LOGGER.info("Language command received.")
-        buttons = [InlineKeyboardButton(lang, callback_data=f"language_{code}") for code, lang in LANGUAGE_OPTIONS.items()]
+        if callback_data == "language_settings":
+            LOGGER.info("Change Language button clicked.")
+            await self._show_language_selection(update, context)
+        elif callback_data.startswith("language_"):
+            await self._handle_language_selection(update, context)
+        else:
+            LOGGER.warning(f"Unexpected callback data: {callback_data}")
+            await query.answer()
+    
+    async def _show_language_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Send language selection options to the user."""
+        LOGGER.info("Displaying language selection options.")
+        buttons = [
+            InlineKeyboardButton(lang, callback_data=f"language_{code}")
+            for code, lang in LANGUAGE_OPTIONS.items()
+        ]
         reply_markup = InlineKeyboardMarkup([buttons])
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="Please select your language / Veuillez sélectionner votre langue:",
+            text=self._get_localized_text("language-selection"),
             reply_markup=reply_markup
         )
+    
+    async def _handle_language_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle user's language selection."""
+        query = update.callback_query
+        selected_language = query.data.split("_")[1]
 
-    async def _language_selection_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Handler to process the language selection from inline buttons."""
-        selected_language = update.callback_query.data.split("_")[1]
+        LOGGER.info(f"User selected language: {selected_language}")
         chat_id = update.effective_chat.id
-        # self.database_handler.put_item({"chat_id": str(chat_id), "language": selected_language})
-        await update.callback_query.answer()
 
+        # TODO: Save the selected language (uncomment and implement if using a database)
+        # self.database_handler.put_item({"chat_id": str(chat_id), "language": selected_language})
+
+        await query.answer()
         text = self._get_localized_text("language-message").format(language=LANGUAGE_OPTIONS[selected_language])
         await context.bot.send_message(chat_id=chat_id, text=text)
+    
+    async def _callback_query_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle button presses (Help, Settings, etc.)."""
+        query = update.callback_query
+        await query.answer()
+
+        if query.data == CALLBACK_DATA_HELP:
+            LOGGER.info("Help button clicked.")
+            await self._help_handler(update, context)
+        elif query.data == CALLBACK_DATA_SETTINGS:
+            LOGGER.info("Settings button clicked.")
+            await self._settings_handler(update, context)
+        elif query.data == CALLBACK_DATA_START:
+            LOGGER.info("Start button clicked.")
+            await self._start_handler(update, context)
+        elif query.data == CALLBACK_NOTIFICATIONS_START:
+            LOGGER.info("Enable Notifications button clicked.")
+            await self._notifications_start_handler(update, context)
+        elif query.data == CALLBACK_NOTIFICATIONS_STOP:
+            LOGGER.info("Disable Notifications button clicked.")
+            await self._notifications_stop_handler(update, context)
+        elif query.data == CALLBACK_DATA_REGISTER:
+            LOGGER.info("Register Account button clicked.")
+            await self._register_account_handler(update, context)
+        else:
+            LOGGER.warning(f"Unhandled callback data: {query.data}")
+            await context.bot.send_message(chat_id=query.message.chat_id, text="Sorry, I didn't understand that action.")
 
     def _get_localized_text(self, message_key: str) -> str:
         """Retrieve localized text based on the user's selected language."""
         return Utils.localize(message_key, self.user_language, self.localizable_strings)
+
+    async def _set_bot_commands(self):
+        """Register bot commands for Telegram UI."""
+        commands = [
+            BotCommand("start", self._get_localized_text("command_start")),
+            BotCommand("help", self._get_localized_text("command_help")),
+            BotCommand("settings", self._get_localized_text("command_settings")),
+            BotCommand("register", self._get_localized_text("command_register")),
+            BotCommand("status", self._get_localized_text("command_status")),
+            BotCommand("about", self._get_localized_text("command_about")),
+        ]
+        await self.application.bot.set_my_commands(commands)
     
     async def start(self, event: Dict) -> None:
         """Process incoming Telegram webhook event."""
         try:
             LOGGER.info("Starting TelegramNotifier application.")
             await self.application.initialize()
+            await self._set_bot_commands()
             update = Update.de_json(json.loads(event["body"]), self.application.bot)
             await self.application.process_update(update)
 

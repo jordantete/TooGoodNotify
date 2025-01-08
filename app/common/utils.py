@@ -6,7 +6,11 @@ from app.common.constants import LOCALIZATIONS_FILE_PATH, TELEGRAM_API_URL
 
 class Utils:
     @classmethod
-    def get_environment_variable(cls, var_name: str, default=None):
+    def get_environment_variable(
+        cls, 
+        var_name: str, 
+        default=None
+    ):
         """Retrieve an environment variable, defaulting to the provided value if not found."""
         value = os.getenv(var_name, default)
         if value is None:
@@ -26,7 +30,11 @@ class Utils:
         return {}
 
     @staticmethod
-    def localize(key, language, localizable_data):
+    def localize(
+        key, 
+        language, 
+        localizable_data
+    ):
         """Retrieve a localized string by key and language."""
         translation = localizable_data.get(language, {}).get(key)
         if not translation:
@@ -35,8 +43,13 @@ class Utils:
         return translation
 
     @staticmethod
-    def send_telegram_message(text: str, chat_id: Optional[str] = None):
-        """Send a message via Telegram."""
+    def send_telegram_message(
+        text: str, 
+        chat_id: Optional[str] = None,
+        parse_mode: str = "Markdown",
+        disable_web_page_preview: bool = True
+    ):
+        """Send a message via Telegram to a specific user or default chat."""
         bot_token = Utils.get_environment_variable("TELEGRAM_BOT_TOKEN")
         if not bot_token:
             LOGGER.error("Telegram bot token is missing.")
@@ -49,14 +62,17 @@ class Utils:
                 return
 
         encoded_text = quote(text, safe='')
-        url = TELEGRAM_API_URL.format(token=bot_token) + f"?chat_id={chat_id}&disable_web_page_preview=True&parse_mode=Markdown&text={encoded_text}"
+        url = (
+            f"{TELEGRAM_API_URL.format(token=bot_token)}"
+            f"?chat_id={chat_id}&disable_web_page_preview={disable_web_page_preview}&parse_mode={parse_mode}&text={encoded_text}"
+        )
         
         try:
             response = requests.get(url)
             response.raise_for_status()
-            LOGGER.info("Telegram message sent successfully.")
+            LOGGER.info(f"Telegram message sent successfully to chat_id: {chat_id}")
         except requests.RequestException as e:
-            LOGGER.error(f"Failed to send Telegram message: {e}")
+            LOGGER.error(f"Failed to send Telegram message to chat_id: {chat_id}. Error: {e}")
 
     @staticmethod
     def ok_response():

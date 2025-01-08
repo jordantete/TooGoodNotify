@@ -36,8 +36,6 @@ provider:
           Resource:
             - ${env:LAMBDA_MONITORING_ARN}
   environment:
-    SENDER_EMAIL: ${env:SENDER_EMAIL}
-    SENDER_EMAIL_PASSWORD: ${env:SENDER_EMAIL_PASSWORD}
     USER_EMAIL: ${env:USER_EMAIL}
     ACCESS_TOKEN: ${env:ACCESS_TOKEN}
     REFRESH_TOKEN: ${env:REFRESH_TOKEN}

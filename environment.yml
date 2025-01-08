@@ -1,4 +1,4 @@
-name: too_good_notify_env
+name: TooGoodNotify
 channels:
   - defaults
 dependencies:
