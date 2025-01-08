@@ -170,6 +170,7 @@ class Scheduler:
     ) -> None:
         """Activate cooldown by updating Lambda environment variables."""
         try:
+            LOGGER.info("Triggering cooldown due to anti-bot detection.")
             response = self.lambda_client.get_function_configuration(FunctionName=self.lambda_arn)
             current_env_vars = response['Environment']['Variables']
             LOGGER.info(f"Current environment variables: {current_env_vars}")

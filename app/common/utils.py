@@ -1,7 +1,5 @@
-import os, json, requests, smtplib
+import os, json, requests
 from typing import Optional
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from urllib.parse import quote
 from app.common.logger import LOGGER
 from app.common.constants import LOCALIZATIONS_FILE_PATH, TELEGRAM_API_URL
@@ -35,31 +33,6 @@ class Utils:
             LOGGER.warning(f"Missing translation for '{key}' in '{language}'")
             return ""
         return translation
-
-    @staticmethod
-    def send_mail(subject: str, message: str, recipient_email: str):
-        """Send an email using SMTP."""
-        sender_email = Utils.get_environment_variable("SENDER_EMAIL")
-        sender_password = Utils.get_environment_variable("SENDER_EMAIL_PASSWORD")
-
-        if not sender_email or not sender_password:
-            LOGGER.error("Sender email or password not configured.")
-            return
-
-        msg = MIMEMultipart()
-        msg["From"] = sender_email
-        msg["To"] = recipient_email
-        msg["Subject"] = subject
-        msg.attach(MIMEText(message, 'plain'))
-
-        try:
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.starttls()
-                server.login(sender_email, sender_password)
-                server.sendmail(sender_email, recipient_email, msg.as_string())
-                LOGGER.info(f"Email sent to {recipient_email}")
-        except Exception as e:
-            LOGGER.error(f"Failed to send email: {e}")
 
     @staticmethod
     def send_telegram_message(text: str, chat_id: Optional[str] = None):

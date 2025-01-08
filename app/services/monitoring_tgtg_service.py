@@ -83,11 +83,10 @@ class MonitoringTgtgService:
         except TgtgAPIParsingError as e:
             error_msg = f"TgtgAPIParsingError encountered: {str(e)}"
             LOGGER.error(error_msg)
-            Utils.send_mail("TooGoodToNotify: System Error", error_msg, self.user_email)
+            Utils.send_telegram_message(f"TooGoodToNotify: System Error - {error_msg}")
 
         except ForbiddenError as e:
             LOGGER.error(f"ForbiddenError: {str(e)}")
-            LOGGER.info("Triggering cooldown due to anti-bot detection.")
             self.scheduler.activate_cooldown()
             Utils.send_telegram_message("API access forbidden. Monitoring paused temporarily.")
 
