@@ -38,8 +38,6 @@ At the root of the project, create a `.env` file and add the necessary environme
 
   ```plaintext
   # .env
-  SENDER_EMAIL=your_sender_email@example.com
-  SENDER_EMAIL_PASSWORD=your_email_password
   USER_EMAIL=your_user_email@example.com
   TELEGRAM_BOT_TOKEN=your_telegram_bot_token
   TELEGRAM_CHAT_ID=your_telegram_chat_id
@@ -80,3 +78,7 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE.txt
 ## 👀 Feedback
 
 Have any questions or feedback? Feel free to reach out via the issues tab on GitHub. We’d love to hear from you!
+
+## ❗ Disclaimer
+
+**TooGoodNotify** is an independent project and is not affiliated with, endorsed by, or officially connected to TooGoodToGo (TGTG) or any of its subsidiaries or affiliates. All product names, logos, and brands are property of their respective owners.
