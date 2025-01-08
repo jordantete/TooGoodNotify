@@ -1,5 +1,4 @@
 import pytz
-from requests.exceptions import HTTPError
 from pydantic import ValidationError
 from datetime import datetime
 from typing import Optional, List, Dict

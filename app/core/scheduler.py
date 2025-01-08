@@ -1,4 +1,4 @@
-import boto3, pytz, random, os
+import boto3, pytz, random
 from typing import Optional, Tuple, List
 from datetime import datetime, timedelta
 from app.common.utils import Utils

@@ -1,9 +1,8 @@
 import boto3
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Attr
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from app.common.logger import LOGGER
-from app.common.utils import Utils
 from app.core.exceptions import DatabaseConnectionError, DatabaseQueryError
 
 class DatabaseHandler:
