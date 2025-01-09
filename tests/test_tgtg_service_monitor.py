@@ -50,7 +50,7 @@ class TestTgtgServiceMonitor:
         with patch("app.services.tgtg_service_monitor.TgtgService") as mock_tgtg_service:
             mock_instance = mock_tgtg_service.return_value
             mock_instance.retrieve_credentials.return_value = None
-            result = monitoring_service._retrieve_tgtg_credentials()
+            result = monitoring_service.request_new_tgtg_credentials()
             assert result == "PENDING"
 
     def test_retrieve_tgtg_credentials_failure(self, monitoring_service):
@@ -58,7 +58,7 @@ class TestTgtgServiceMonitor:
             patch("app.common.logger.LOGGER.error") as mock_logger:
             mock_instance = mock_tgtg_service.return_value
             mock_instance.retrieve_credentials.side_effect = TgtgLoginError("Credential retrieval failed")
-            result = monitoring_service._retrieve_tgtg_credentials()
+            result = monitoring_service.request_new_tgtg_credentials()
             assert result == "FAILED"
             mock_logger.assert_called_once_with("Failed to retrieve new credential: TgtgLoginError: Credential retrieval failed")
 

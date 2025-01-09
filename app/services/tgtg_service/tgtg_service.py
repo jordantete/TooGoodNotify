@@ -66,6 +66,9 @@ class TgtgService:
         """Fetch and parse favorite items from TGTG API."""
         LOGGER.info("Fetching favorite items from TGTG API.")
         try:
+            creds = self.tgtg_client.get_credentials()
+            LOGGER.info(f"Credentials {creds}")
+
             json_data = self.tgtg_client.get_favorites()
             LOGGER.info(f"Raw API response: {json_data}")
             favorites = [ItemDetails(**item) for item in json_data]

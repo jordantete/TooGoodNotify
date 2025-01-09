@@ -55,7 +55,7 @@ class TgtgServiceMonitor:
         """Checks whether all necessary credentials are available."""
         return all([self.access_token, self.refresh_token, self.user_id, self.tgtg_cookie])
 
-    def _retrieve_tgtg_credentials(self) -> str:
+    def request_new_tgtg_credentials(self) -> str:
         """Retrieve TgtgService using minimal credentials."""
         try:
             tgtg_service = TgtgService(email=self.user_email)

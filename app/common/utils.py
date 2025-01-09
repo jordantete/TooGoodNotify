@@ -78,8 +78,8 @@ class Utils:
     
     @staticmethod
     def escape_markdown_v2(text: str) -> str:
-        escaped_text = re.sub(r'([*_`$begin:math:display$$end:math:display$()~>#+-=|{}.!])', r'\\\1', text)
-        return escaped_text
+        special_chars = r'[_\*\[\]\(\)\~\>\#\+\-\.\!]'        
+        return re.sub(special_chars, r'\\\g<0>', text)
 
     @staticmethod
     def ok_response():

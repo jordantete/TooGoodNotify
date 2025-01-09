@@ -49,7 +49,6 @@ class TelegramBotHandler:
         self.application.add_handler(CommandHandler(CALLBACK_DATA_REGISTER, self._register_account_handler))
         self.application.add_handler(CommandHandler(CALLBACK_NOTIFICATIONS_START, self._notifications_start_handler))
         self.application.add_handler(CommandHandler(CALLBACK_NOTIFICATIONS_STOP, self._notifications_stop_handler))
-        self.application.add_handler(CommandHandler('status', self._status_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_ABOUT, self._about_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_LANGUAGE, self._language_handler))
 
@@ -95,8 +94,8 @@ class TelegramBotHandler:
         chat_id = update.effective_chat.id
 
         try:
-            status = self.tgtg_service_monitor._retrieve_and_login()
-            if status == "FAILED":
+            creds_request_status = self.tgtg_service_monitor.request_new_tgtg_credentials()
+            if creds_request_status == "FAILED":
                 await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-failed"))
                 return
 
@@ -137,16 +136,6 @@ class TelegramBotHandler:
         LOGGER.info("Notifications stop command received.")
         text = self._get_localized_text("notifications-stop")
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
-
-    async def _status_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        LOGGER.info("Status command received.")
-        user_email = Utils.get_environment_variable("USER_EMAIL")
-
-        status_text = self._get_localized_text("status-message").format(
-            status="enabled" if self.notifications_enabled else "disabled",
-            email=user_email
-        )
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=status_text)
 
     async def _about_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("About command received.")
@@ -241,7 +230,6 @@ class TelegramBotHandler:
             BotCommand("help", self._get_localized_text("command_help")),
             BotCommand("settings", self._get_localized_text("command_settings")),
             BotCommand("register", self._get_localized_text("command_register")),
-            BotCommand("status", self._get_localized_text("command_status")),
             BotCommand("about", self._get_localized_text("command_about")),
         ]
         await self.application.bot.set_my_commands(commands)
