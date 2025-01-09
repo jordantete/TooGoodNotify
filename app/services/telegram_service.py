@@ -1,13 +1,13 @@
 from app.core.telegram_bot_handler import TelegramBotHandler
-from app.services.monitoring_tgtg_service import MonitoringTgtgService
+from app.services.tgtg_service_monitor import TgtgServiceMonitor
 from app.common.logger import LOGGER
 
 class TelegramService:
     def __init__(
         self, 
-        monitoring_service: MonitoringTgtgService
+        tgtg_service_monitor: TgtgServiceMonitor
     ):
-        self.bot_handler = TelegramBotHandler(monitoring_service)
+        self.bot_handler = TelegramBotHandler(tgtg_service_monitor)
 
     async def process_webhook(self, event):
         LOGGER.info(f"Processing Telegram webhook with event: {event}")

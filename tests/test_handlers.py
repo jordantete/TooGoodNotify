@@ -16,7 +16,7 @@ class TestHandlers:
         return MagicMock()
 
     def test_tgtg_monitoring_handler_valid_event(self, mock_event, mock_context):
-        with patch('app.handlers.Scheduler') as mock_scheduler, patch('app.handlers.MonitoringTgtgService') as mock_monitoring_service:
+        with patch('app.handlers.Scheduler') as mock_scheduler, patch('app.handlers.TgtgServiceMonitor') as mock_monitoring_service:
             
             mock_monitoring_instance = mock_monitoring_service.return_value
             tgtg_monitoring_handler(mock_event, mock_context)
@@ -28,7 +28,7 @@ class TestHandlers:
     def test_tgtg_monitoring_handler_invalid_event(self, mock_context):
         invalid_event = {'resources': ['some-other-resource']}
         
-        with patch('app.handlers.Scheduler') as mock_scheduler, patch('app.handlers.MonitoringTgtgService') as mock_monitoring_service:
+        with patch('app.handlers.Scheduler') as mock_scheduler, patch('app.handlers.TgtgServiceMonitor') as mock_monitoring_service:
             
             tgtg_monitoring_handler(invalid_event, mock_context)
             
@@ -46,14 +46,9 @@ class TestHandlers:
 
     @pytest.mark.asyncio
     async def test_telegram_webhook_handler(self):
-        test_event = {
-            'body': '{"message": {"text": "/start", "chat": {"id": 123456789}}}'
-        }
+        test_event = {'body': '{"message": {"text": "/start", "chat": {"id": 123456789}}}'}
         
-        with patch('app.handlers.TelegramService') as mock_telegram_service, \
-            patch('app.handlers.Scheduler'), \
-            patch('app.handlers.MonitoringTgtgService'):
-            
+        with patch('app.handlers.TelegramService') as mock_telegram_service, patch('app.handlers.Scheduler'), patch('app.handlers.TgtgServiceMonitor'):
             mock_telegram_instance = mock_telegram_service.return_value
             mock_telegram_instance.process_webhook = AsyncMock()
             
@@ -64,14 +59,9 @@ class TestHandlers:
 
     @pytest.mark.asyncio
     async def test_telegram_webhook_handler_error(self):
-        test_event = {
-            'body': '{"message": {"text": "/start", "chat": {"id": 123456789}}}'
-        }
+        test_event = {'body': '{"message": {"text": "/start", "chat": {"id": 123456789}}}'}
         
-        with patch('app.handlers.TelegramService') as mock_telegram_service, \
-            patch('app.handlers.Scheduler'), \
-            patch('app.handlers.MonitoringTgtgService'):
-            
+        with patch('app.handlers.TelegramService') as mock_telegram_service, patch('app.handlers.Scheduler'), patch('app.handlers.TgtgServiceMonitor'):
             mock_telegram_instance = mock_telegram_service.return_value
             mock_telegram_instance.process_webhook = AsyncMock(side_effect=Exception("Test error"))
             

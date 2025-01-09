@@ -1,12 +1,12 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from app.services.telegram_service import TelegramService
-from app.services.monitoring_tgtg_service import MonitoringTgtgService
+from app.services.tgtg_service_monitor import TgtgServiceMonitor
 
 class TestTelegramService:
     @pytest.fixture
     def mock_monitoring_service(self):
-        return MagicMock(spec=MonitoringTgtgService)
+        return MagicMock(spec=TgtgServiceMonitor)
 
     @pytest.fixture
     def telegram_service(self, mock_monitoring_service):

@@ -2,7 +2,7 @@ import asyncio, re, json
 from typing import Any, Dict, Union
 from app.common.logger import LOGGER
 from app.core.scheduler import Scheduler
-from app.services.monitoring_tgtg_service import MonitoringTgtgService
+from app.services.tgtg_service_monitor import TgtgServiceMonitor
 from app.services.telegram_service import TelegramService
 from app.common.utils import Utils
 
@@ -13,12 +13,12 @@ def tgtg_monitoring_handler(
     context: Any
 ):
     """Handle monitoring of the TGTG API based on event scheduling rules."""
-    LOGGER.info(f"Launching monitoring of TGTG API - event: {event} - context: {context}")
+    LOGGER.info(f"Launching monitoring of TGTG API with event: {event} - context: {context}")
 
     if _is_monitoring_event(event):
         scheduler = Scheduler()
-        monitoring_tgtg_service = MonitoringTgtgService(scheduler=scheduler)
-        monitoring_tgtg_service.start_monitoring()
+        tgtg_service_monitor = TgtgServiceMonitor()
+        tgtg_service_monitor.start_monitoring(scheduler)
     else:
         LOGGER.info("Monitoring TGTG not launched - wrong scheduling event")
 
@@ -52,11 +52,11 @@ async def run_telegram_webhook(
     """Process the Telegram webhook event asynchronously."""
     LOGGER.info(f"Telegram Webhook triggered - event: {event}")
     try:
-        scheduler = Scheduler()
-        monitoring_tgtg_service = MonitoringTgtgService(scheduler=scheduler)
-        telegram_service = TelegramService(monitoring_tgtg_service)
+        tgtg_service_monitor = TgtgServiceMonitor()
+        telegram_service = TelegramService(tgtg_service_monitor)
         await telegram_service.process_webhook(event)
         return Utils.ok_response()
+
     except Exception as e:
         LOGGER.error(f"Error in Telegram webhook: {str(e)}")
         return Utils.error_response("Oops, something went wrong with Telegram Notifier!")

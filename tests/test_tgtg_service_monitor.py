@@ -1,12 +1,12 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from app.services.monitoring_tgtg_service import MonitoringTgtgService
+from app.services.tgtg_service_monitor import TgtgServiceMonitor
 from app.services.tgtg_service.exceptions import TgtgAPIConnectionError, TgtgAPIParsingError, TgtgLoginError, ForbiddenError
 
-class TestMonitoringTgtgService:
+class TestTgtgServiceMonitor:
     @pytest.fixture
     def monitoring_service(self, mock_scheduler, test_environment):
-        return MonitoringTgtgService(scheduler=mock_scheduler)
+        return TgtgServiceMonitor(scheduler=mock_scheduler)
 
     def test_init(self, monitoring_service, test_environment):
         assert monitoring_service.lambda_arn == test_environment["LAMBDA_MONITORING_ARN"]

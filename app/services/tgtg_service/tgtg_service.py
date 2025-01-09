@@ -15,11 +15,11 @@ class TgtgService:
 
     def __init__(
         self, 
-        email: Optional[str] = None, 
-        access_token: Optional[str] = None,
-        refresh_token: Optional[str] = None, 
-        user_id: Optional[str] = None, 
-        cookie: Optional[str] = None
+        email: str, 
+        access_token: str,
+        refresh_token: str, 
+        user_id: str, 
+        cookie: str
     ):
         self.email = email
         self.access_token = access_token
@@ -31,7 +31,7 @@ class TgtgService:
 
     def login(self) -> None:
         """Initialize the TGTG client with credentials."""
-        LOGGER.info(f"Login to TGTG API with user_id: {self.user_id}, using device: IPHONE")
+        LOGGER.info(f"Login to TGTG API with access_token: {self.access_token} refresh_token: {self.refresh_token} user_id: {self.user_id} cookie: {self.cookie}")
         try:
             self.tgtg_client = TgtgClient(
                 access_token=self.access_token,
@@ -40,6 +40,7 @@ class TgtgService:
                 user_agent=self.USER_AGENT,
                 device_type="IPHONE"
             )
+
         except Exception as e:
             raise TgtgLoginError("Unable to login with provided credentials.") from e
 
@@ -53,7 +54,7 @@ class TgtgService:
             self.refresh_token = creds['refresh_token']
             self.user_id = creds['user_id']
             self.cookie = creds['cookie']
-            LOGGER.info("Credentials successfully retrieved and stored.")
+            LOGGER.info(f"Credentials successfully retrieved and stored: access_token: {self.access_token} refresh_token: {self.refresh_token} user_id: {self.user_id} cookie: {self.cookie}")
 
         except KeyError as e:
             raise TgtgAPIParsingError("Missing expected key in TGTG API response.") from e
@@ -72,7 +73,6 @@ class TgtgService:
             return favorites
         
         except ValidationError as e:
-            LOGGER.error(f"Validation error while parsing item details: {e}")
             raise TgtgAPIParsingError("Error parsing item details.") from e
 
         except Exception as e:

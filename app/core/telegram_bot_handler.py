@@ -5,7 +5,7 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Callb
 from app.core.database_handler import DatabaseHandler
 from app.common.utils import Utils
 from app.common.logger import LOGGER
-from app.services.monitoring_tgtg_service import MonitoringTgtgService
+from app.services.tgtg_service_monitor import TgtgServiceMonitor
 from app.common.constants import WELCOME_GIF_URL
 
 TELEGRAM_BOT_TOKEN = Utils.get_environment_variable("TELEGRAM_BOT_TOKEN")
@@ -23,7 +23,7 @@ DEFAULT_LANGUAGE = "fr"
 class TelegramBotHandler:
     def __init__(
         self, 
-        monitoring_service: MonitoringTgtgService
+        tgtg_service_monitor: TgtgServiceMonitor
     ):
         LOGGER.info("Initializing TelegramBotHandler")
         self.application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
@@ -32,7 +32,7 @@ class TelegramBotHandler:
         self.chat_id = Utils.get_environment_variable("TELEGRAM_CHAT_ID")
         self.user_language = self._load_user_language()
         self.notifications_enabled = True
-        self.monitoring_service = monitoring_service
+        self.tgtg_service_monitor = tgtg_service_monitor
         self.register_handlers()
     
     def _load_user_language(self) -> str:
@@ -61,23 +61,25 @@ class TelegramBotHandler:
         LOGGER.info("Start command received.")
         await context.bot.send_animation(chat_id=update.effective_chat.id, animation=WELCOME_GIF_URL)
 
-        text = self._get_localized_text("start-message")
+        text = Utils.escape_markdown_v2(self._get_localized_text("start-message"))
         buttons = [
             InlineKeyboardButton("💡 Register", callback_data=CALLBACK_DATA_REGISTER),
             InlineKeyboardButton("📖 Help", callback_data=CALLBACK_DATA_HELP),
             InlineKeyboardButton("⚙️ Settings", callback_data=CALLBACK_DATA_SETTINGS)
         ]
         reply_markup = InlineKeyboardMarkup([buttons])
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup, parse_mode="MarkdownV2")
 
     async def _help_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Help command received.")
-        text = self._get_localized_text("help-message")
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+        text = Utils.escape_markdown_v2(self._get_localized_text("help-message"))
+
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="MarkdownV2")
 
     async def _settings_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Settings command received.")
         text = self._get_localized_text("settings-message")
+        
         buttons = [
             [
                 InlineKeyboardButton("Enable Notifications", callback_data=CALLBACK_NOTIFICATIONS_START),
@@ -93,7 +95,7 @@ class TelegramBotHandler:
         chat_id = update.effective_chat.id
 
         try:
-            status = self.monitoring_service._retrieve_and_login()
+            status = self.tgtg_service_monitor._retrieve_and_login()
             if status == "FAILED":
                 await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-failed"))
                 return
@@ -105,14 +107,14 @@ class TelegramBotHandler:
             elapsed_time = 0
 
             while elapsed_time < timeout:
-                if self.monitoring_service.check_credentials_ready():
+                if self.tgtg_service_monitor.check_credentials_ready():
                     new_env_vars = {
                         "ACCESS_TOKEN": self.monitoring_service.tgtg_service.access_token,
                         "REFRESH_TOKEN": self.monitoring_service.tgtg_service.refresh_token,
                         "USER_ID": self.monitoring_service.tgtg_service.user_id,
                         "TGTG_COOKIE": self.monitoring_service.tgtg_service.cookie
                     }
-                    self.monitoring_service.update_lambda_env_vars(new_env_vars)
+                    self.tgtg_service_monitor.update_lambda_env_vars(new_env_vars)
 
                     await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-success"))
                     return

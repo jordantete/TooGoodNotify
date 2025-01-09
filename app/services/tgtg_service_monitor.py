@@ -6,12 +6,8 @@ from app.services.tgtg_service.exceptions import TgtgAPIConnectionError, TgtgAPI
 from app.common.logger import LOGGER
 from app.common.utils import Utils
 
-class MonitoringTgtgService:
-    def __init__(
-        self, 
-        scheduler: Scheduler
-    ):
-        self.scheduler = scheduler
+class TgtgServiceMonitor:
+    def __init__(self):
         self.lambda_arn: Optional[str] = Utils.get_environment_variable("LAMBDA_MONITORING_ARN")
         self.user_email: Optional[str] = Utils.get_environment_variable("USER_EMAIL")
         self.access_token: Optional[str] = Utils.get_environment_variable("ACCESS_TOKEN")
@@ -20,31 +16,41 @@ class MonitoringTgtgService:
         self.tgtg_cookie: Optional[str] = Utils.get_environment_variable("TGTG_COOKIE")
         self.lambda_client: boto3.client = boto3.client('lambda')
     
-    def start_monitoring(self) -> None:
-        """Initialize monitoring by checking credentials and creating a TgtgService instance."""
-        self.tgtg_service = self._get_tgtg_service_instance()
-        if self.tgtg_service:
-            self._monitor_favorites()
-        else:
-            LOGGER.error("Failed to initialize TgtgService due to missing credentials.")
+    def start_monitoring(self, scheduler: Scheduler) -> None:
+        """
+        Start the monitoring process by checking for valid credentials and initializing the TgtgService instance.
+        If the credentials are valid, it proceeds to monitor the favorites.
+        """
+        tgtg_service = self._get_tgtg_service_logged_in_instance()
 
-    def _get_tgtg_service_instance(self) -> Optional[TgtgService]:
+        if tgtg_service:
+            self._monitor_favorites(tgtg_service, scheduler)
+
+    def _get_tgtg_service_logged_in_instance(self) -> Optional[TgtgService]:
         """Retrieve or initialize the TgtgService with available credentials."""
-        if all([self.access_token, self.refresh_token, self.user_id, self.tgtg_cookie]):
+        if not self._are_credentials_valid():
+            LOGGER.error("Missing or invalid credentials. Please ensure that all your environment variables are set correctly.")
+            LOGGER.error(f"Current credentials: user_email: {self.user_email}, access_token: {self.access_token}, refresh_token: {self.refresh_token}, user_id: {self.user_id}, tgtg_cookie: {self.tgtg_cookie}")
+            return None
+
+        try:
             LOGGER.info("User credentials available, initializing TgtgService.")
-            try:
-                tgtg_service = TgtgService(self.user_email, self.access_token, self.refresh_token, self.user_id, self.tgtg_cookie)
-                tgtg_service.login()
-                return tgtg_service
+            tgtg_service = TgtgService(self.user_email, self.access_token, self.refresh_token, self.user_id, self.tgtg_cookie)
+            tgtg_service.login()
+            LOGGER.info("TgtgService initialized successfully.")
+            return tgtg_service
 
-            except TgtgLoginError as e:
-                LOGGER.error(f"Failed to login to TGTG API: {e}")
+        except TgtgLoginError as e:
+            LOGGER.error(f"Failed to login to TGTG API: {e}")
 
-            except Exception as e:
-                LOGGER.error(f"Unexpected error initializing TgtgService: {e}")
-                return None
-        else:
-            LOGGER.info("Credentials missing - please ensure that all your environment variables are set")
+        except Exception as e:
+            LOGGER.error(f"Unexpected error initializing TgtgService: {e}")
+
+        return None
+
+    def _are_credentials_valid(self) -> bool:
+        """Checks whether all necessary credentials are available."""
+        return all([self.access_token, self.refresh_token, self.user_id, self.tgtg_cookie])
 
     def _retrieve_tgtg_credentials(self) -> str:
         """Retrieve TgtgService using minimal credentials."""
@@ -85,12 +91,12 @@ class MonitoringTgtgService:
             LOGGER.error(f"Error checking credential readiness: {e}")
             return False
 
-    def _monitor_favorites(self) -> None:
+    def _monitor_favorites(self, tgtg_service: TgtgService, scheduler: Scheduler) -> None:
         """Check favorite items and send notifications if new items are available."""
         LOGGER.info("Checking favorite items and sending notifications if needed.")
         try:
-            favorites = self.tgtg_service.get_favorites_items()
-            messages = self.tgtg_service.get_notification_messages(favorites)
+            favorites = tgtg_service.get_favorites_items()
+            messages = tgtg_service.get_notification_messages(favorites)
 
             for message in messages:
                 LOGGER.info(f"Sending Telegram message: {message}")
@@ -102,16 +108,20 @@ class MonitoringTgtgService:
         except TgtgAPIParsingError as e:
             error_msg = f"TgtgAPIParsingError encountered: {str(e)}"
             LOGGER.error(error_msg)
-            Utils.send_telegram_message(f"TooGoodToNotify: System Error - {error_msg}")
+            Utils.send_telegram_message(f"TgtgAPIParsingError: {error_msg}")
 
         except ForbiddenError as e:
             LOGGER.error(f"ForbiddenError: {str(e)}")
-            self.scheduler.activate_cooldown()
+            scheduler.activate_cooldown()
             Utils.send_telegram_message("API access forbidden. Monitoring paused temporarily.")
 
         except TgtgAPIConnectionError as e:
             LOGGER.error(f"Connection error to TGTG API. {str(e)}")
             Utils.send_telegram_message(f"TGTG API connection error: {str(e)}")
+        
+        except Exception as e:
+            LOGGER.error(f"Unexpected error in _monitor_favorites: {str(e)}")
+            Utils.send_telegram_message(f"TooGoodToNotify: Unexpected system error - {str(e)}")
     
     def update_lambda_env_vars(self, new_env_vars: dict) -> None:
         """Update AWS Lambda environment variables with new credentials."""
@@ -128,5 +138,4 @@ class MonitoringTgtgService:
             LOGGER.info("AWS Lambda environment variables updated successfully.")
 
         except Exception as e:
-            LOGGER.error(f"Failed to update AWS Lambda environment variables: {e}")
-            raise
+            raise Exception(f"Failed to update AWS Lambda environment variables: {e}")

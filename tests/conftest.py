@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from app.core.scheduler import Scheduler
-from app.services.monitoring_tgtg_service import MonitoringTgtgService
+from app.services.tgtg_service_monitor import TgtgServiceMonitor
 from app.services.tgtg_service.models import ItemDetails, Store, Item, PickupInterval, PickupLocation, PriceInfo, Picture, Address
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def mock_scheduler():
 
 @pytest.fixture
 def mock_monitoring_service(mock_scheduler):
-    mock_service = MagicMock(spec=MonitoringTgtgService)
+    mock_service = MagicMock(spec=TgtgServiceMonitor)
     # Add the required methods to the mock
     mock_service._retrieve_and_login = MagicMock()
     mock_service.check_credentials_ready = MagicMock()
