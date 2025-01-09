@@ -38,7 +38,7 @@ class TgtgServiceMonitor:
             return "PENDING"  # Indicates waiting for user action
 
         except TgtgLoginError as e:
-            LOGGER.error(f"Failed to retrieve new credential: {e}")
+            LOGGER.error(f"Failed to retrieve new credentials: {e}")
             return "FAILED"
 
         except Exception as e:
@@ -73,7 +73,7 @@ class TgtgServiceMonitor:
         LOGGER.info("Checking favorite items and sending notifications if needed.")
         try:
             tgtg_service = TgtgService()
-            favorites = tgtg_service.get_favorites_items_list(access_token=self.access_token, refresh_token=self.refresh_token, cookie=self.tgtg_cookie)
+            favorites = tgtg_service.get_favorites_items_list(email=self.user_email, access_token=self.access_token, refresh_token=self.refresh_token, cookie=self.tgtg_cookie)
             messages = tgtg_service.get_notification_messages(favorites)
 
             for message in messages:

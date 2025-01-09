@@ -35,7 +35,7 @@ def mock_monitoring_service():
     mock_service.update_lambda_env_vars = MagicMock()
     return mock_service
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def test_environment(monkeypatch):
     """Set up test environment variables."""
     env_vars = {

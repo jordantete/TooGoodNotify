@@ -2,12 +2,13 @@ import pytest, asyncio
 from unittest.mock import patch, MagicMock, AsyncMock
 from telegram import Update, Message, Chat, User, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
+from telegram.constants import ParseMode
 from app.core.telegram_bot_handler import TelegramBotHandler, CALLBACK_DATA_HELP, DEFAULT_LANGUAGE
 from app.services.tgtg_service.exceptions import TgtgLoginError
 
 class TestTelegramBotHandler:
     @pytest.fixture
-    def telegram_bot_handler(self, mock_monitoring_service, test_environment):
+    def telegram_bot_handler(self, mock_monitoring_service):
         with patch('telegram.ext.ApplicationBuilder.build', return_value=MagicMock()):
             handler = TelegramBotHandler(tgtg_service_monitor=mock_monitoring_service)
             handler.application.bot = AsyncMock()
@@ -55,7 +56,8 @@ class TestTelegramBotHandler:
         await telegram_bot_handler._notifications_start_handler(mock_update, mock_context)
         mock_context.bot.send_message.assert_called_once_with(
             chat_id=mock_update.effective_chat.id,
-            text=telegram_bot_handler._get_localized_text("notifications-start")
+            text=telegram_bot_handler._get_localized_text("notifications-start"),
+            parse_mode=ParseMode.HTML
         )
 
     @pytest.mark.asyncio
@@ -63,7 +65,8 @@ class TestTelegramBotHandler:
         await telegram_bot_handler._notifications_stop_handler(mock_update, mock_context)
         mock_context.bot.send_message.assert_called_once_with(
             chat_id=mock_update.effective_chat.id,
-            text=telegram_bot_handler._get_localized_text("notifications-stop")
+            text=telegram_bot_handler._get_localized_text("notifications-stop"),
+            parse_mode=ParseMode.HTML
         )
 
     @pytest.mark.asyncio
@@ -71,7 +74,8 @@ class TestTelegramBotHandler:
         await telegram_bot_handler._about_handler(mock_update, mock_context)
         mock_context.bot.send_message.assert_called_once_with(
             chat_id=mock_update.effective_chat.id,
-            text=telegram_bot_handler._get_localized_text("about-message")
+            text=telegram_bot_handler._get_localized_text("about-message"),
+            parse_mode=ParseMode.HTML        
         )
 
     @pytest.mark.asyncio
@@ -121,7 +125,7 @@ class TestTelegramBotHandler:
 
         mock_update.callback_query.answer.assert_called_once()
         localized_unhandled_text = telegram_bot_handler._get_localized_text("unhandled-action")
-        mock_context.bot.send_message.assert_called_once_with(chat_id=mock_update.callback_query.message.chat_id, text=localized_unhandled_text)
+        mock_context.bot.send_message.assert_called_once_with(chat_id=mock_update.callback_query.message.chat_id, text=localized_unhandled_text, parse_mode=ParseMode.HTML)
 
     @pytest.mark.asyncio
     async def test_register_account_handler_success(self, telegram_bot_handler, mock_update, mock_context):
@@ -195,24 +199,26 @@ class TestTelegramBotHandler:
 
     @pytest.mark.asyncio
     async def test_register_account_handler_login_error(self, telegram_bot_handler, mock_update, mock_context):
-        telegram_bot_handler.tgtg_service_monitor._retrieve_and_login.side_effect = TgtgLoginError("Login failed")
+        with patch.object(telegram_bot_handler.tgtg_service_monitor, '_retrieve_and_login', side_effect=TgtgLoginError("Login failed")):
+            await telegram_bot_handler._register_account_handler(mock_update, mock_context)
 
-        await telegram_bot_handler._register_account_handler(mock_update, mock_context)
+            error_message = telegram_bot_handler._get_localized_text('register-error')
 
-        error_message = telegram_bot_handler._get_localized_text('register-error')
-        mock_context.bot.send_message.assert_called_with(chat_id=mock_update.effective_chat.id, text=error_message)
+            mock_context.bot.send_message.assert_called_with(
+                chat_id=mock_update.effective_chat.id,
+                text=error_message,
+                parse_mode=ParseMode.HTML
+            )
 
     @pytest.mark.asyncio
     async def test_register_account_handler_credential_update(self, telegram_bot_handler, mock_update, mock_context):
         telegram_bot_handler.tgtg_service_monitor._retrieve_and_login.return_value = "PENDING"
         telegram_bot_handler.tgtg_service_monitor.check_credentials_ready.return_value = True
-        
         mock_tgtg_service = MagicMock()
         mock_tgtg_service.access_token = "new_access_token"
         mock_tgtg_service.refresh_token = "new_refresh_token"
         mock_tgtg_service.user_id = "new_user_id"
         mock_tgtg_service.cookie = "new_cookie"
-        
         telegram_bot_handler.tgtg_service_monitor.tgtg_service = mock_tgtg_service
 
         await telegram_bot_handler._register_account_handler(mock_update, mock_context)
@@ -223,10 +229,11 @@ class TestTelegramBotHandler:
             "USER_ID": "new_user_id",
             "TGTG_COOKIE": "new_cookie"
         }
-        telegram_bot_handler.tgtg_service_monitor.update_lambda_env_vars.assert_called_once_with(expected_credentials)
+
+        telegram_bot_handler.tgtg_service_monitor.update_lambda_env_vars.assert_called_once_with(telegram_bot_handler.lambda_arn, expected_credentials)
 
         success_message = telegram_bot_handler._get_localized_text('register-success')
-        assert any(call[1]['text'] == success_message for call in mock_context.bot.send_message.call_args_list) 
+        assert any(call[1]['text'] == success_message for call in mock_context.bot.send_message.call_args_list)
     
     def test_get_localized_text(self, telegram_bot_handler):
         text = telegram_bot_handler._get_localized_text('start-message')

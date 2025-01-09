@@ -22,7 +22,13 @@ class TgtgService:
         LOGGER.info("Retrieving new credentials from TGTG API.")
         try:
             client = TgtgClient(email=email)
+
+            LOGGER.info(f"Will request new credentials")
+
             creds = client.get_credentials()
+
+            LOGGER.info(f"Request new credentials done")
+
             self.credentials = {
                 'access_token': creds['access_token'],
                 'refresh_token': creds['refresh_token'],
@@ -35,13 +41,13 @@ class TgtgService:
             raise TgtgAPIParsingError("Missing expected key in TGTG API response.") from e
 
         except Exception as e:
-            raise TgtgLoginError("Failed to retrieve credentials due to an unexpected error.") from e
+            raise TgtgLoginError(f"Failed to retrieve credentials due to an unexpected error {str(e)}")
 
-    def get_favorites_items_list(self, access_token: str, refresh_token: str, cookie: str) -> List[ItemDetails]:
+    def get_favorites_items_list(self, email: str, access_token: str, refresh_token: str, cookie: str) -> List[ItemDetails]:
         """Login to TGTG if needed and fetch and parse favorite items from TGTG API."""
         LOGGER.info(f"Login to TGTG API with access_token: {access_token} refresh_token: {refresh_token} cookie: {cookie}")
         try: 
-            tgtg_client = TgtgClient(access_token=access_token, refresh_token=refresh_token, cookie=cookie, user_agent=self.USER_AGENT, device_type="IPHONE")
+            tgtg_client = TgtgClient(email=email ,access_token=access_token, refresh_token=refresh_token, cookie=cookie, user_agent=self.USER_AGENT, device_type="IPHONE")
 
         except Exception as e:
             raise TgtgLoginError("Unable to login with provided credentials.") from e
