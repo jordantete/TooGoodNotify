@@ -13,48 +13,23 @@ from app.services.tgtg_service.exceptions import TgtgLoginError, TgtgAPIConnecti
 class TgtgService:
     USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1"
 
-    def __init__(
-        self, 
-        email: str, 
-        access_token: str,
-        refresh_token: str, 
-        user_id: str, 
-        cookie: str
-    ):
-        self.email = email
-        self.access_token = access_token
-        self.refresh_token = refresh_token
-        self.user_id = user_id
-        self.cookie = cookie
+    def __init__(self):
         self.database_handler = DatabaseHandler(table_name="UserNotifications")
-        self.tgtg_client: Optional[TgtgClient] = None
+        self.credentials = {}
 
-    def login(self) -> None:
-        """Initialize the TGTG client with credentials."""
-        LOGGER.info(f"Login to TGTG API with access_token: {self.access_token} refresh_token: {self.refresh_token} user_id: {self.user_id} cookie: {self.cookie}")
-        try:
-            self.tgtg_client = TgtgClient(
-                access_token=self.access_token,
-                refresh_token=self.refresh_token,
-                cookie=self.cookie,
-                user_agent=self.USER_AGENT,
-                device_type="IPHONE"
-            )
-
-        except Exception as e:
-            raise TgtgLoginError("Unable to login with provided credentials.") from e
-
-    def retrieve_credentials(self) -> None:
-        """Retrieve new credentials from the TGTG API."""
+    def retrieve_credentials(self, email: str) -> None:
+        """Retrieve new credentials from the TGTG API with user email."""
         LOGGER.info("Retrieving new credentials from TGTG API.")
         try:
-            client = TgtgClient(email=self.email)
+            client = TgtgClient(email=email)
             creds = client.get_credentials()
-            self.access_token = creds['access_token']
-            self.refresh_token = creds['refresh_token']
-            self.user_id = creds['user_id']
-            self.cookie = creds['cookie']
-            LOGGER.info(f"Credentials successfully retrieved and stored: access_token: {self.access_token} refresh_token: {self.refresh_token} user_id: {self.user_id} cookie: {self.cookie}")
+            self.credentials = {
+                'access_token': creds['access_token'],
+                'refresh_token': creds['refresh_token'],
+                'user_id': creds['user_id'],
+                'cookie': creds['cookie']
+            }
+            LOGGER.info(f"Credentials successfully retrieved and stored: access_token: {self.credentials}")
 
         except KeyError as e:
             raise TgtgAPIParsingError("Missing expected key in TGTG API response.") from e
@@ -62,14 +37,21 @@ class TgtgService:
         except Exception as e:
             raise TgtgLoginError("Failed to retrieve credentials due to an unexpected error.") from e
 
-    def get_favorites_items(self) -> List[ItemDetails]:
-        """Fetch and parse favorite items from TGTG API."""
+    def get_favorites_items_list(self, access_token: str, refresh_token: str, cookie: str) -> List[ItemDetails]:
+        """Login to TGTG if needed and fetch and parse favorite items from TGTG API."""
+        LOGGER.info(f"Login to TGTG API with access_token: {access_token} refresh_token: {refresh_token} cookie: {cookie}")
+        try: 
+            tgtg_client = TgtgClient(access_token=access_token, refresh_token=refresh_token, cookie=cookie, user_agent=self.USER_AGENT, device_type="IPHONE")
+
+        except Exception as e:
+            raise TgtgLoginError("Unable to login with provided credentials.") from e
+
         LOGGER.info("Fetching favorite items from TGTG API.")
         try:
-            creds = self.tgtg_client.get_credentials()
+            creds = tgtg_client.get_credentials()
             LOGGER.info(f"Credentials {creds}")
 
-            json_data = self.tgtg_client.get_favorites()
+            json_data = tgtg_client.get_favorites()
             LOGGER.info(f"Raw API response: {json_data}")
             favorites = [ItemDetails(**item) for item in json_data]
             LOGGER.info(f"Parsed {len(favorites)} favorite items from TGTG API.")

@@ -8,48 +8,23 @@ from app.common.utils import Utils
 
 class TgtgServiceMonitor:
     def __init__(self):
-        self.lambda_arn: Optional[str] = Utils.get_environment_variable("LAMBDA_MONITORING_ARN")
         self.user_email: Optional[str] = Utils.get_environment_variable("USER_EMAIL")
         self.access_token: Optional[str] = Utils.get_environment_variable("ACCESS_TOKEN")
         self.refresh_token: Optional[str] = Utils.get_environment_variable("REFRESH_TOKEN")
         self.user_id: Optional[str] = Utils.get_environment_variable("USER_ID")
         self.tgtg_cookie: Optional[str] = Utils.get_environment_variable("TGTG_COOKIE")
-        self.lambda_client: boto3.client = boto3.client('lambda')
     
     def start_monitoring(self, scheduler: Scheduler) -> None:
         """
-        Start the monitoring process by checking for valid credentials and initializing the TgtgService instance.
+        Start the monitoring process by checking for valid credentials. 
         If the credentials are valid, it proceeds to monitor the favorites.
         """
-        tgtg_service = self._get_tgtg_service_logged_in_instance()
-
-        if not tgtg_service:
-            LOGGER.error("Missing or invalid credentials. Please ensure that all your environment variables are set correctly.")
-            return
-
-        self._monitor_favorites(tgtg_service, scheduler)
-
-    def _get_tgtg_service_logged_in_instance(self) -> Optional[TgtgService]:
-        """Retrieve or initialize the TgtgService with available credentials."""
         if not self._are_credentials_valid():
             LOGGER.error("Missing or invalid credentials. Please ensure that all your environment variables are set correctly.")
-            LOGGER.error(f"Current credentials: user_email: {self.user_email}, access_token: {self.access_token}, refresh_token: {self.refresh_token}, user_id: {self.user_id}, tgtg_cookie: {self.tgtg_cookie}")
+            LOGGER.error(f"Current credentials are: user_email: {self.user_email}, access_token: {self.access_token}, refresh_token: {self.refresh_token}, user_id: {self.user_id}, tgtg_cookie: {self.tgtg_cookie}")
             return None
 
-        try:
-            LOGGER.info("User credentials available, initializing TgtgService.")
-            tgtg_service = TgtgService(self.user_email, self.access_token, self.refresh_token, self.user_id, self.tgtg_cookie)
-            tgtg_service.login()
-            LOGGER.info("TgtgService initialized successfully.")
-            return tgtg_service
-
-        except TgtgLoginError as e:
-            LOGGER.error(f"Failed to login to TGTG API: {e}")
-
-        except Exception as e:
-            LOGGER.error(f"Unexpected error initializing TgtgService: {e}")
-
-        return None
+        self._monitor_favorites(scheduler)
 
     def _are_credentials_valid(self) -> bool:
         """Checks whether all necessary credentials are available."""
@@ -58,8 +33,8 @@ class TgtgServiceMonitor:
     def request_new_tgtg_credentials(self) -> str:
         """Retrieve TgtgService using minimal credentials."""
         try:
-            tgtg_service = TgtgService(email=self.user_email)
-            tgtg_service.retrieve_credentials()  # Sends the email for verification
+            tgtg_service = TgtgService()
+            tgtg_service.retrieve_credentials(email=self.user_email)  # Sends the email for verification
             return "PENDING"  # Indicates waiting for user action
 
         except TgtgLoginError as e:
@@ -80,25 +55,25 @@ class TgtgServiceMonitor:
 
             # Compare with new credentials from TgtgService
             credentials_updated = (
-                self.tgtg_service.access_token and
-                self.tgtg_service.refresh_token and
-                self.tgtg_service.cookie and
-                (self.tgtg_service.access_token != current_access_token or
-                self.tgtg_service.refresh_token != current_refresh_token or
-                self.tgtg_service.cookie != current_cookie)
+                'access_token' in self.tgtg_service.credentials and
+                'refresh_token' in self.tgtg_service.credentials and
+                'cookie' in self.tgtg_service.credentials and
+                (self.tgtg_service.credentials['access_token'] != current_access_token or
+                self.tgtg_service.credentials['refresh_token'] != current_refresh_token or
+                self.tgtg_service.credentials['cookie'] != current_cookie)
             )
-            
             return credentials_updated
 
         except Exception as e:
             LOGGER.error(f"Error checking credential readiness: {e}")
             return False
 
-    def _monitor_favorites(self, tgtg_service: TgtgService, scheduler: Scheduler) -> None:
+    def _monitor_favorites(self, scheduler: Scheduler) -> None:
         """Check favorite items and send notifications if new items are available."""
         LOGGER.info("Checking favorite items and sending notifications if needed.")
         try:
-            favorites = tgtg_service.get_favorites_items()
+            tgtg_service = TgtgService()
+            favorites = tgtg_service.get_favorites_items_list(access_token=self.access_token, refresh_token=self.refresh_token, cookie=self.tgtg_cookie)
             messages = tgtg_service.get_notification_messages(favorites)
 
             for message in messages:
@@ -126,18 +101,23 @@ class TgtgServiceMonitor:
             LOGGER.error(f"Unexpected error in _monitor_favorites: {str(e)}")
             Utils.send_telegram_message(f"TooGoodToNotify: Unexpected system error - {str(e)}")
     
-    def update_lambda_env_vars(self, new_env_vars: dict) -> None:
+    def update_lambda_env_vars(
+        self, 
+        lambda_arn: str, 
+        new_env_vars: dict
+    ) -> None:
         """Update AWS Lambda environment variables with new credentials."""
         try:
-            LOGGER.info("Updating AWS Lambda environment variables with new credentials.")            
-            response = self.lambda_client.get_function_configuration(FunctionName=self.lambda_arn)
+            LOGGER.info("Updating AWS Lambda environment variables with new credentials.")      
+            lambda_client = boto3.client('lambda')
+            response = lambda_client.get_function_configuration(FunctionName=lambda_arn)
             current_env_vars = response['Environment']['Variables']
             LOGGER.info(f"Current environment variables: {current_env_vars}")
 
             updated_env_vars = current_env_vars.copy()
             updated_env_vars.update(new_env_vars)
 
-            self.lambda_client.update_function_configuration(FunctionName=self.lambda_arn, Environment={'Variables': updated_env_vars})
+            lambda_client.update_function_configuration(FunctionName=lambda_arn, Environment={'Variables': updated_env_vars})
             LOGGER.info("AWS Lambda environment variables updated successfully.")
 
         except Exception as e:

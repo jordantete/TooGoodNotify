@@ -75,11 +75,6 @@ class Utils:
             LOGGER.error(f"Failed to send Telegram message to chat_id: {chat_id}. Error: {e}")
         except Exception as e:
             LOGGER.error(f"Unexpected error while sending Telegram message: {e}")
-    
-    @staticmethod
-    def escape_markdown_v2(text: str) -> str:
-        special_chars = r'[_\*\[\]\(\)\~\>\#\+\-\.\!]'        
-        return re.sub(special_chars, r'\\\g<0>', text)
 
     @staticmethod
     def ok_response():

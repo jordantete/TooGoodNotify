@@ -1,7 +1,8 @@
 import json, asyncio
-from typing import Dict
+from typing import Dict, Optional
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler
+from telegram.constants import ParseMode
 from app.core.database_handler import DatabaseHandler
 from app.common.utils import Utils
 from app.common.logger import LOGGER
@@ -27,6 +28,7 @@ class TelegramBotHandler:
     ):
         LOGGER.info("Initializing TelegramBotHandler")
         self.application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+        self.lambda_arn: Optional[str] = Utils.get_environment_variable("LAMBDA_MONITORING_ARN")
         self.localizable_strings = Utils.load_localizable_data()
         self.database_handler = DatabaseHandler(table_name="User")
         self.chat_id = Utils.get_environment_variable("TELEGRAM_CHAT_ID")
@@ -59,21 +61,20 @@ class TelegramBotHandler:
     async def _start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Start command received.")
         await context.bot.send_animation(chat_id=update.effective_chat.id, animation=WELCOME_GIF_URL)
-
-        text = Utils.escape_markdown_v2(self._get_localized_text("start-message"))
+        text = self._get_localized_text("start-message")
         buttons = [
             InlineKeyboardButton("💡 Register", callback_data=CALLBACK_DATA_REGISTER),
             InlineKeyboardButton("📖 Help", callback_data=CALLBACK_DATA_HELP),
             InlineKeyboardButton("⚙️ Settings", callback_data=CALLBACK_DATA_SETTINGS)
         ]
         reply_markup = InlineKeyboardMarkup([buttons])
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup, parse_mode="MarkdownV2")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
 
     async def _help_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Help command received.")
-        text = Utils.escape_markdown_v2(self._get_localized_text("help-message"))
+        text = self._get_localized_text("help-message")
 
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="MarkdownV2")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode=ParseMode.HTML)
 
     async def _settings_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Settings command received.")
@@ -87,7 +88,7 @@ class TelegramBotHandler:
             [InlineKeyboardButton("Change Language", callback_data="language_settings")]
         ]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
 
     async def _register_account_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Register command received. Refreshing TGTG credentials.")
@@ -96,10 +97,10 @@ class TelegramBotHandler:
         try:
             creds_request_status = self.tgtg_service_monitor.request_new_tgtg_credentials()
             if creds_request_status == "FAILED":
-                await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-failed"))
+                await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-failed"), parse_mode=ParseMode.HTML)
                 return
 
-            await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-pending"))
+            await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-pending"), parse_mode=ParseMode.HTML)
 
             timeout = 300  # 5 minutes
             poll_interval = 10  # Check every 10 seconds
@@ -113,34 +114,34 @@ class TelegramBotHandler:
                         "USER_ID": self.tgtg_service_monitor.tgtg_service.user_id,
                         "TGTG_COOKIE": self.tgtg_service_monitor.tgtg_service.cookie
                     }
-                    self.tgtg_service_monitor.update_lambda_env_vars(new_env_vars)
+                    self.tgtg_service_monitor.update_lambda_env_vars(self.lambda_arn, new_env_vars)
 
-                    await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-success"))
+                    await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-success"), parse_mode=ParseMode.HTML)
                     return
 
                 await asyncio.sleep(poll_interval)
                 elapsed_time += poll_interval
 
-            await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-timeout"))
+            await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-timeout"), parse_mode=ParseMode.HTML)
 
         except Exception as e:
             LOGGER.error(f"Error during registration process: {e}")
-            await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-error"))
+            await context.bot.send_message(chat_id=chat_id, text=self._get_localized_text("register-error"), parse_mode=ParseMode.HTML)
 
     async def _notifications_start_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Notifications start command received.")
         text = self._get_localized_text("notifications-start")
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode=ParseMode.HTML)
 
     async def _notifications_stop_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Notifications stop command received.")
         text = self._get_localized_text("notifications-stop")
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode=ParseMode.HTML)
 
     async def _about_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("About command received.")
         text = self._get_localized_text("about-message")
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode=ParseMode.HTML)
     
     async def _language_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle language selection initiation and processing."""
@@ -174,7 +175,8 @@ class TelegramBotHandler:
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=self._get_localized_text("language-selection"),
-            reply_markup=reply_markup
+            reply_markup=reply_markup,
+            parse_mode=ParseMode.HTML
         )
     
     async def _handle_language_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -190,7 +192,7 @@ class TelegramBotHandler:
 
         await query.answer()
         text = self._get_localized_text("language-message").format(language=LANGUAGE_OPTIONS[selected_language])
-        await context.bot.send_message(chat_id=chat_id, text=text)
+        await context.bot.send_message(chat_id=chat_id, text=text, parse_mode=ParseMode.HTML)
     
     async def _callback_query_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle button presses (Help, Settings, etc.)."""
@@ -217,7 +219,7 @@ class TelegramBotHandler:
             await self._register_account_handler(update, context)
         else:
             LOGGER.warning(f"Unhandled callback data: {query.data}")
-            await context.bot.send_message(chat_id=query.message.chat_id, text=self._get_localized_text("unhandled-action"))
+            await context.bot.send_message(chat_id=query.message.chat_id, text=self._get_localized_text("unhandled-action"), parse_mode=ParseMode.HTML)
 
     def _get_localized_text(self, message_key: str) -> str:
         """Retrieve localized text based on the user's selected language."""
