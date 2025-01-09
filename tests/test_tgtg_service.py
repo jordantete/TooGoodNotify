@@ -52,7 +52,14 @@ class TestTgtgService:
             }
             mock_tgtg.return_value = mock_client
 
-            service = TgtgService(email="test@example.com")
+            service = TgtgService(
+                email="test@example.com",
+                access_token="test_access_token",
+                refresh_token="test_refresh_token",
+                user_id="test_user_id",
+                cookie="test_cookie"
+            )
+            
             service.retrieve_credentials()
 
             assert service.access_token == "new_access_token"
@@ -62,7 +69,13 @@ class TestTgtgService:
 
     def test_retrieve_credentials_failure(self):
         with patch("tgtg.TgtgClient", side_effect=Exception("API error")):
-            service = TgtgService(email="test@example.com")
+            service = TgtgService(
+                email="test@example.com",
+                access_token="test_access_token",
+                refresh_token="test_refresh_token",
+                user_id="test_user_id",
+                cookie="test_cookie"
+            )
             with pytest.raises(TgtgLoginError):
                 service.retrieve_credentials()
 

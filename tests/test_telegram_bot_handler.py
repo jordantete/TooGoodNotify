@@ -9,7 +9,7 @@ class TestTelegramBotHandler:
     @pytest.fixture
     def telegram_bot_handler(self, mock_monitoring_service, test_environment):
         with patch('telegram.ext.ApplicationBuilder.build', return_value=MagicMock()):
-            handler = TelegramBotHandler(monitoring_service=mock_monitoring_service)
+            handler = TelegramBotHandler(tgtg_service_monitor=mock_monitoring_service)
             handler.application.bot = AsyncMock()
             return handler
 
@@ -125,15 +125,15 @@ class TestTelegramBotHandler:
 
     @pytest.mark.asyncio
     async def test_register_account_handler_success(self, telegram_bot_handler, mock_update, mock_context):
-        telegram_bot_handler.monitoring_service._retrieve_and_login.return_value = "PENDING"
-        telegram_bot_handler.monitoring_service.check_credentials_ready.return_value = True
+        telegram_bot_handler.tgtg_service_monitor._retrieve_and_login.return_value = "PENDING"
+        telegram_bot_handler.tgtg_service_monitor.check_credentials_ready.return_value = True
         
         mock_tgtg_service = MagicMock()
         mock_tgtg_service.access_token = "new_access_token"
         mock_tgtg_service.refresh_token = "new_refresh_token"
         mock_tgtg_service.user_id = "new_user_id"
         mock_tgtg_service.cookie = "new_cookie"
-        telegram_bot_handler.monitoring_service.tgtg_service = mock_tgtg_service
+        telegram_bot_handler.tgtg_service_monitor.tgtg_service = mock_tgtg_service
         
         await telegram_bot_handler._register_account_handler(mock_update, mock_context)
         
@@ -143,7 +143,7 @@ class TestTelegramBotHandler:
 
     @pytest.mark.asyncio
     async def test_register_account_handler_failure(self, telegram_bot_handler, mock_update, mock_context):
-        telegram_bot_handler.monitoring_service._retrieve_and_login.return_value = "FAILED"
+        telegram_bot_handler.tgtg_service_monitor._retrieve_and_login.return_value = "FAILED"
         
         await telegram_bot_handler._register_account_handler(mock_update, mock_context)
         
@@ -167,19 +167,19 @@ class TestTelegramBotHandler:
 
     @pytest.mark.asyncio
     async def test_register_account_handler_complete_flow(self, telegram_bot_handler, mock_update, mock_context):
-        telegram_bot_handler.monitoring_service._retrieve_and_login.return_value = "PENDING"
-        telegram_bot_handler.monitoring_service.check_credentials_ready.side_effect = [False, False, True]
-        telegram_bot_handler.monitoring_service.tgtg_service = MagicMock()
-        telegram_bot_handler.monitoring_service.tgtg_service.access_token = "new_access_token"
-        telegram_bot_handler.monitoring_service.tgtg_service.refresh_token = "new_refresh_token"
-        telegram_bot_handler.monitoring_service.tgtg_service.user_id = "new_user_id"
-        telegram_bot_handler.monitoring_service.tgtg_service.cookie = "new_cookie"
+        telegram_bot_handler.tgtg_service_monitor._retrieve_and_login.return_value = "PENDING"
+        telegram_bot_handler.tgtg_service_monitor.check_credentials_ready.side_effect = [False, False, True]
+        telegram_bot_handler.tgtg_service_monitor.tgtg_service = MagicMock()
+        telegram_bot_handler.tgtg_service_monitor.tgtg_service.access_token = "new_access_token"
+        telegram_bot_handler.tgtg_service_monitor.tgtg_service.refresh_token = "new_refresh_token"
+        telegram_bot_handler.tgtg_service_monitor.tgtg_service.user_id = "new_user_id"
+        telegram_bot_handler.tgtg_service_monitor.tgtg_service.cookie = "new_cookie"
 
         await telegram_bot_handler._register_account_handler(mock_update, mock_context)
 
-        assert telegram_bot_handler.monitoring_service._retrieve_and_login.called
-        assert telegram_bot_handler.monitoring_service.check_credentials_ready.call_count == 3
-        assert telegram_bot_handler.monitoring_service.update_lambda_env_vars.called
+        assert telegram_bot_handler.tgtg_service_monitor._retrieve_and_login.called
+        assert telegram_bot_handler.tgtg_service_monitor.check_credentials_ready.call_count == 3
+        assert telegram_bot_handler.tgtg_service_monitor.update_lambda_env_vars.called
 
         messages_sent = [call[1]['text'] for call in mock_context.bot.send_message.call_args_list]
         assert telegram_bot_handler._get_localized_text('register-pending') in messages_sent
@@ -187,8 +187,8 @@ class TestTelegramBotHandler:
 
     @pytest.mark.asyncio
     async def test_register_account_handler_timeout(self, telegram_bot_handler, mock_update, mock_context):
-        telegram_bot_handler.monitoring_service._retrieve_and_login.return_value = "PENDING"
-        telegram_bot_handler.monitoring_service.check_credentials_ready.return_value = False
+        telegram_bot_handler.tgtg_service_monitor._retrieve_and_login.return_value = "PENDING"
+        telegram_bot_handler.tgtg_service_monitor.check_credentials_ready.return_value = False
 
         original_sleep = asyncio.sleep
         
@@ -204,7 +204,7 @@ class TestTelegramBotHandler:
 
     @pytest.mark.asyncio
     async def test_register_account_handler_login_error(self, telegram_bot_handler, mock_update, mock_context):
-        telegram_bot_handler.monitoring_service._retrieve_and_login.side_effect = TgtgLoginError("Login failed")
+        telegram_bot_handler.tgtg_service_monitor._retrieve_and_login.side_effect = TgtgLoginError("Login failed")
 
         await telegram_bot_handler._register_account_handler(mock_update, mock_context)
 
@@ -213,8 +213,8 @@ class TestTelegramBotHandler:
 
     @pytest.mark.asyncio
     async def test_register_account_handler_credential_update(self, telegram_bot_handler, mock_update, mock_context):
-        telegram_bot_handler.monitoring_service._retrieve_and_login.return_value = "PENDING"
-        telegram_bot_handler.monitoring_service.check_credentials_ready.return_value = True
+        telegram_bot_handler.tgtg_service_monitor._retrieve_and_login.return_value = "PENDING"
+        telegram_bot_handler.tgtg_service_monitor.check_credentials_ready.return_value = True
         
         mock_tgtg_service = MagicMock()
         mock_tgtg_service.access_token = "new_access_token"
@@ -222,7 +222,7 @@ class TestTelegramBotHandler:
         mock_tgtg_service.user_id = "new_user_id"
         mock_tgtg_service.cookie = "new_cookie"
         
-        telegram_bot_handler.monitoring_service.tgtg_service = mock_tgtg_service
+        telegram_bot_handler.tgtg_service_monitor.tgtg_service = mock_tgtg_service
 
         await telegram_bot_handler._register_account_handler(mock_update, mock_context)
 
@@ -232,7 +232,7 @@ class TestTelegramBotHandler:
             "USER_ID": "new_user_id",
             "TGTG_COOKIE": "new_cookie"
         }
-        telegram_bot_handler.monitoring_service.update_lambda_env_vars.assert_called_once_with(expected_credentials)
+        telegram_bot_handler.tgtg_service_monitor.update_lambda_env_vars.assert_called_once_with(expected_credentials)
 
         success_message = telegram_bot_handler._get_localized_text('register-success')
         assert any(call[1]['text'] == success_message for call in mock_context.bot.send_message.call_args_list) 

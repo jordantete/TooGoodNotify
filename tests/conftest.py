@@ -27,7 +27,7 @@ def mock_scheduler():
     return MagicMock(spec=Scheduler)
 
 @pytest.fixture
-def mock_monitoring_service(mock_scheduler):
+def mock_monitoring_service():
     mock_service = MagicMock(spec=TgtgServiceMonitor)
     # Add the required methods to the mock
     mock_service._retrieve_and_login = MagicMock()

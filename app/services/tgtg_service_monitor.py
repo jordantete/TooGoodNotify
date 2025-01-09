@@ -23,8 +23,11 @@ class TgtgServiceMonitor:
         """
         tgtg_service = self._get_tgtg_service_logged_in_instance()
 
-        if tgtg_service:
-            self._monitor_favorites(tgtg_service, scheduler)
+        if not tgtg_service:
+            LOGGER.error("Missing or invalid credentials. Please ensure that all your environment variables are set correctly.")
+            return
+
+        self._monitor_favorites(tgtg_service, scheduler)
 
     def _get_tgtg_service_logged_in_instance(self) -> Optional[TgtgService]:
         """Retrieve or initialize the TgtgService with available credentials."""

@@ -10,7 +10,7 @@ class TestTelegramService:
 
     @pytest.fixture
     def telegram_service(self, mock_monitoring_service):
-        return TelegramService(monitoring_service=mock_monitoring_service)
+        return TelegramService(tgtg_service_monitor=mock_monitoring_service)
 
     @patch("app.services.telegram_service.TelegramBotHandler")
     @pytest.mark.asyncio
@@ -18,7 +18,7 @@ class TestTelegramService:
         mock_handler_instance = AsyncMock()
         mock_bot_handler.return_value = mock_handler_instance
 
-        service = TelegramService(monitoring_service=mock_monitoring_service)
+        service = TelegramService(tgtg_service_monitor=mock_monitoring_service)
         test_event = {"update_id": 123456, "message": {"text": "/start"}}
 
         await service.process_webhook(test_event)

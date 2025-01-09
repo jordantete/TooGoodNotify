@@ -109,10 +109,10 @@ class TelegramBotHandler:
             while elapsed_time < timeout:
                 if self.tgtg_service_monitor.check_credentials_ready():
                     new_env_vars = {
-                        "ACCESS_TOKEN": self.monitoring_service.tgtg_service.access_token,
-                        "REFRESH_TOKEN": self.monitoring_service.tgtg_service.refresh_token,
-                        "USER_ID": self.monitoring_service.tgtg_service.user_id,
-                        "TGTG_COOKIE": self.monitoring_service.tgtg_service.cookie
+                        "ACCESS_TOKEN": self.tgtg_service_monitor.tgtg_service.access_token,
+                        "REFRESH_TOKEN": self.tgtg_service_monitor.tgtg_service.refresh_token,
+                        "USER_ID": self.tgtg_service_monitor.tgtg_service.user_id,
+                        "TGTG_COOKIE": self.tgtg_service_monitor.tgtg_service.cookie
                     }
                     self.tgtg_service_monitor.update_lambda_env_vars(new_env_vars)
 
