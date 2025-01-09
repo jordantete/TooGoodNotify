@@ -1,11 +1,11 @@
 {
     "en": {
-        "start-message": "👋 <b>Welcome to TooGoodNotify!</b><br><br>I'm here to help you get notified when TooGoodToGo magic bags are available. Use /help to see what I can do for you. 🎁",
-        "help-message": "🤔 <b>Need help?</b> Here are the commands you can use:<br><br>- /start: <i>Start interacting with the bot</i><br>- /help: <i>Show this help message</i><br>- /settings: <i>Configure your preferences</i><br>- /register: <i>Register your account to receive notifications</i><br>- /notifications_start: <i>Start receiving notifications</i><br>- /notifications_stop: <i>Stop receiving notifications</i><br>- /about: <i>Learn more about this bot</i>",
-        "settings-message": "⚙️ <b>Settings</b><br>Here you can configure your preferences:<br>- Use /language to change your preferred language.<br>- Use /notifications_start or /notifications_stop to control notifications.",
+        "start-message": "👋 <b>Welcome to TooGoodNotify!</b>\n\nI'm here to help you get notified when TooGoodToGo magic bags are available. Use /help to see what I can do for you. 🎁",
+        "help-message": "🤔 <b>Need help?</b> Here are the commands you can use:\n\n- /start: <i>Start interacting with the bot</i>\n- /help: <i>Show this help message</i>\n- /settings: <i>Configure your preferences</i>\n- /register: <i>Register your account to receive notifications</i>\n- /notifications_start: <i>Start receiving notifications</i>\n- /notifications_stop: <i>Stop receiving notifications</i>\n- /about: <i>Learn more about this bot</i>",
+        "settings-message": "⚙️ <b>Settings</b>\nHere you can configure your preferences:\n- Use /language to change your preferred language.\n- Use /notifications_start or /notifications_stop to control notifications.",
         "notifications-start": "🔔 <b>Notifications enabled!</b> 🎉 We'll notify you of TooGoodToGo offers in your area. 🍱",
         "notifications-stop": "🔕 <b>Notifications disabled.</b> You will no longer receive updates. Enable them anytime with /notifications_start.",
-        "about-message": "ℹ️ <b>About TooGoodNotify</b><br>This bot keeps you updated on TooGoodToGo magic bags. Powered by the TooGoodToGo API and a dedicated server to deliver timely alerts. 🚀",
+        "about-message": "ℹ️ <b>About TooGoodNotify</b>\nThis bot keeps you updated on TooGoodToGo magic bags. Powered by the TooGoodToGo API and a dedicated server to deliver timely alerts. 🚀",
         "language-selection": "🌍 <b>Choose your language:</b>",
         "language-message": "Your language has been set to <b>{language}</b>. Use /help if you need assistance. 😊",
         "command_start": "🚀 Start interacting with the bot",
@@ -21,12 +21,12 @@
         "unhandled-action": "🤔 <b>Unknown action.</b> Please try one of the options from the menu."
     },
     "fr": {
-        "start-message": "👋 <b>Bienvenue sur TooGoodNotify!</b><br><br>Je suis là pour vous aider à recevoir des notifications lorsque des offres TooGoodToGo sont disponibles. Utilisez /help pour voir ce que je peux faire pour vous. 🎁",
+        "start-message": "👋 <b>Bienvenue sur TooGoodNotify!</b>\n\nJe suis là pour vous aider à recevoir des notifications lorsque des offres TooGoodToGo sont disponibles. Utilisez /help pour voir ce que je peux faire pour vous. 🎁",
         "help-message": "🤔 <b>Besoin d'aide ?</b> Voici les commandes que vous pouvez utiliser :\n\n- /start: <i>Commencer à interagir avec le bot</i>\n- /help: <i>Afficher ce message d'aide</i>\n- /settings: <i>Configurer vos préférences</i>\n- /register: <i>Enregistrer votre compte pour recevoir des notifications</i>\n- /notifications_start: <i>Commencer à recevoir des notifications</i>\n- /notifications_stop: <i>Arrêter de recevoir des notifications</i>\n- /about: <i>En savoir plus sur ce bot</i>",
-        "settings-message": "⚙️ <b>Paramètres</b><br>Configurez vos préférences ici :<br>- Utilisez /language pour changer votre langue.<br>- Utilisez /notifications_start ou /notifications_stop pour contrôler les notifications.",
+        "settings-message": "⚙️ <b>Paramètres</b>\nConfigurez vos préférences ici :\n- Utilisez /language pour changer votre langue.\n- Utilisez /notifications_start ou /notifications_stop pour contrôler les notifications.",
         "notifications-start": "🔔 <b>Notifications activées !</b> 🎉 Vous recevrez des alertes sur les offres TooGoodToGo près de chez vous. 🍱",
         "notifications-stop": "🔕 <b>Notifications désactivées.</b> Vous ne recevrez plus d'alertes. Activez-les à tout moment avec /notifications_start.",
-        "about-message": "ℹ️ <b>À propos de TooGoodNotify</b><br>Ce bot vous tient informé(e) des offres TooGoodToGo. Propulsé par l'API TooGoodToGo et un serveur dédié pour des alertes rapides. 🚀",
+        "about-message": "ℹ️ <b>À propos de TooGoodNotify</b>\nCe bot vous tient informé(e) des offres TooGoodToGo. Propulsé par l'API TooGoodToGo et un serveur dédié pour des alertes rapides. 🚀",
         "language-selection": "🌍 <b>Choisissez votre langue :</b>",
         "language-message": "Votre langue a été définie sur <b>{language}</b>. Utilisez /help si vous avez besoin d'aide. 😊",
         "command_start": "🚀 Démarrez l'interaction avec le bot",
