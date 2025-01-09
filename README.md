@@ -1,8 +1,11 @@
 # TooGoodNotify 
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 <p align="center">
   <img src="https://github.com/pownedjojo/TooGoodNotify/assets/2340374/f62f2f94-957d-4279-8c77-3214b687299b" alt="MarineGEO circle logo" style="height: 150px; width:150px;"/>
 </p>
+
 
 ## 📌 Overview
 
