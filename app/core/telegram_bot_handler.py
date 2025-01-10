@@ -13,7 +13,7 @@ CALLBACK_DATA_START = "start"
 CALLBACK_DATA_HELP = "help"
 CALLBACK_DATA_SETTINGS = "settings"
 CALLBACK_DATA_PAUSE_BOT = "pause"
-CALLBACK_DATA_IS_BOT_PAUSED = "isbotpaused"
+CALLBACK_DATA_BOT_STATUS = "status"
 CALLBACK_DATA_WAKE_UP_BOT = "wakeup"
 CALLBACK_DATA_ABOUT = "about"
 CALLBACK_DATA_LANGUAGE = "languagesettings"
@@ -40,7 +40,7 @@ class TelegramBotHandler:
         self.application.add_handler(CommandHandler(CALLBACK_DATA_HELP, self._help_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_SETTINGS, self._settings_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_PAUSE_BOT, self._pause_bot_handler))
-        self.application.add_handler(CommandHandler(CALLBACK_DATA_IS_BOT_PAUSED, self._is_bot_paused_handler))
+        self.application.add_handler(CommandHandler(CALLBACK_DATA_BOT_STATUS, self._is_bot_paused_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_WAKE_UP_BOT, self._wake_up_bot_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_ABOUT, self._about_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_LANGUAGE, self._language_handler))
@@ -75,7 +75,7 @@ class TelegramBotHandler:
         
         buttons = [
             [
-                InlineKeyboardButton(self._get_localized_text("is_bot_paused_button"), callback_data=CALLBACK_DATA_IS_BOT_PAUSED),
+                InlineKeyboardButton(self._get_localized_text("status_button"), callback_data=CALLBACK_DATA_BOT_STATUS),
                 InlineKeyboardButton(self._get_localized_text("pause_bot_button"), callback_data=CALLBACK_DATA_PAUSE_BOT),
                 InlineKeyboardButton(self._get_localized_text("wake_up_bot_button"), callback_data=CALLBACK_DATA_WAKE_UP_BOT)
             ],
@@ -84,7 +84,7 @@ class TelegramBotHandler:
         reply_markup = InlineKeyboardMarkup(buttons)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     
-    async def _is_bot_paused_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def _bot_status_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Checking if the bot is paused.")
         
         if self.scheduler._is_in_cooldown():
@@ -232,9 +232,9 @@ class TelegramBotHandler:
             elif callback_data == CALLBACK_DATA_PAUSE_BOT:
                 LOGGER.info("Register Account button clicked.")
                 await self._pause_bot_handler(update, context)
-            elif callback_data == CALLBACK_DATA_IS_BOT_PAUSED:
+            elif callback_data == CALLBACK_DATA_BOT_STATUS:
                 LOGGER.info("Check if bot is paused button clicked.")
-                await self._is_bot_paused_handler(update, context)
+                await self._bot_status_handler(update, context)
             elif callback_data == CALLBACK_DATA_WAKE_UP_BOT:
                 LOGGER.info("Wake up bot button clicked.")
                 await self._wake_up_bot_handler(update, context)
@@ -254,6 +254,7 @@ class TelegramBotHandler:
         commands = [
             BotCommand("start", self._get_localized_text("command_start")),
             BotCommand("settings", self._get_localized_text("command_settings")),
+            BotCommand("status", self._get_localized_text("command_bot_status")),
             BotCommand("pause", self._get_localized_text("command_pause_bot")),
             BotCommand("wakeup", self._get_localized_text("command_wake_up_bot")),
             BotCommand("help", self._get_localized_text("command_help")),
