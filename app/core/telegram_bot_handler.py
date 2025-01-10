@@ -1,9 +1,8 @@
 import json
-from typing import Dict
+from typing import Dict, Optional
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from telegram.constants import ParseMode
-from app.core.database_handler import DatabaseHandler
 from app.common.utils import Utils
 from app.common.logger import LOGGER
 from app.core.scheduler import Scheduler
@@ -28,19 +27,19 @@ class TelegramBotHandler:
         telegram_token = Utils.get_environment_variable("TELEGRAM_BOT_TOKEN")
         self.application = ApplicationBuilder().token(telegram_token).build()
         self.localizable_strings = Utils.load_localizable_data()
-        self.database_handler = DatabaseHandler(table_name="User")
         self.chat_id = Utils.get_environment_variable("TELEGRAM_CHAT_ID")
         self.user_language = Utils.get_environment_variable("USER_LANGUAGE", default="en")
+        self.lambda_arn: Optional[str] = Utils.get_environment_variable("LAMBDA_MONITORING_ARN")
         self.scheduler = scheduler
-        self.register_handlers()
+        self._register_handlers()
 
-    def register_handlers(self) -> None:
+    def _register_handlers(self) -> None:
         """Register Telegram command handlers."""
         self.application.add_handler(CommandHandler(CALLBACK_DATA_START, self._start_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_HELP, self._help_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_SETTINGS, self._settings_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_PAUSE_BOT, self._pause_bot_handler))
-        self.application.add_handler(CommandHandler(CALLBACK_DATA_BOT_STATUS, self._is_bot_paused_handler))
+        self.application.add_handler(CommandHandler(CALLBACK_DATA_BOT_STATUS, self._bot_status_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_WAKE_UP_BOT, self._wake_up_bot_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_ABOUT, self._about_handler))
         self.application.add_handler(CommandHandler(CALLBACK_DATA_LANGUAGE, self._language_handler))
@@ -171,7 +170,7 @@ class TelegramBotHandler:
         query = update.callback_query
         callback_data = query.data
 
-        if callback_data == "language_settings":
+        if callback_data == CALLBACK_DATA_LANGUAGE:
             LOGGER.info("Change Language button clicked.")
             await self._show_language_selection(update, context)
         elif callback_data.startswith("language_"):
@@ -214,11 +213,11 @@ class TelegramBotHandler:
         callback_data = query.data
 
         if callback_data.startswith("cooldown_"):
-            cooldown_minutes = int(callback_data.split("_")[1])
-            await self._activate_cooldown(update, context, cooldown_minutes)
-        elif callback_data == "cooldown_custom":
-            await query.answer()
-            await self._ask_for_custom_cooldown(update, context)
+            if callback_data == "cooldown_custom":
+                await self._ask_for_custom_cooldown(update, context)
+            else:
+                cooldown_minutes = int(callback_data.split("_")[1])
+                await self._activate_cooldown(update, context, cooldown_minutes)
         else:
             if callback_data == CALLBACK_DATA_HELP:
                 LOGGER.info("Help button clicked.")
