@@ -1,8 +1,7 @@
-import boto3
 from typing import Optional
 from app.core.scheduler import Scheduler
 from app.services.tgtg_service.tgtg_service import TgtgService, Credentials
-from app.services.tgtg_service.exceptions import TgtgAPIConnectionError, TgtgAPIParsingError, TgtgLoginError, ForbiddenError
+from app.services.tgtg_service.exceptions import TgtgAPIConnectionError, TgtgAPIParsingError, ForbiddenError
 from app.common.logger import LOGGER
 from app.common.utils import Utils
 

@@ -32,6 +32,7 @@ class TelegramBotHandler:
         self.lambda_arn: Optional[str] = Utils.get_environment_variable("LAMBDA_MONITORING_ARN")
         self.scheduler = scheduler
         self._register_handlers()
+        LOGGER.info(f"TelegramBotHandler initialized with: user_language={self.user_language}")
 
     def _register_handlers(self) -> None:
         """Register Telegram command handlers."""
@@ -201,6 +202,8 @@ class TelegramBotHandler:
 
         new_env_vars = {"USER_LANGUAGE": selected_language}
         Utils.update_lambda_env_vars(self.lambda_arn, new_env_vars)
+        self.user_language = selected_language    
+        self.localizable_strings = Utils.load_localizable_data()
 
         await query.answer()
         text = self._get_localized_text("language-message").format(language=LANGUAGE_OPTIONS[selected_language])

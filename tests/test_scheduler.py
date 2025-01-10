@@ -9,7 +9,8 @@ class TestScheduler:
     @pytest.fixture
     def scheduler(self):
         with patch('boto3.client') as mock_boto3_client:
-            scheduler = Scheduler(lambda_arn="test_arn")
+            scheduler = Scheduler()
+            scheduler.lambda_arn = "test_arn"
             scheduler.events_client = MagicMock()
             scheduler.lambda_client = MagicMock()
             return scheduler
@@ -92,7 +93,6 @@ class TestScheduler:
 
         scheduler.activate_cooldown(cooldown_minutes=30)
 
-        # Verify the Lambda configuration was updated
         call_args = scheduler.lambda_client.update_function_configuration.call_args[1]
         new_vars = call_args['Environment']['Variables']
         assert 'COOLDOWN_END_TIME' in new_vars

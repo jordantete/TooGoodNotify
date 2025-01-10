@@ -9,7 +9,7 @@ class Utils:
     def get_environment_variable(
         cls, 
         var_name: str, 
-        default=None
+        default: Optional[str] = None
     ):
         """Retrieve an environment variable, defaulting to the provided value if not found."""
         value = os.getenv(var_name, default)
