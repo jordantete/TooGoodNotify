@@ -121,3 +121,20 @@ class Utils:
 
         except Exception as e:
             raise Exception(f"Failed to update AWS Lambda environment variables: {e}")
+    
+    @staticmethod
+    def format_remaining_time(remaining_seconds: float) -> str:
+        """Convert remaining seconds into a more readable format (e.g., hours, minutes, seconds)."""
+        hours = int(remaining_seconds // 3600)
+        minutes = int((remaining_seconds % 3600) // 60)
+        seconds = int(remaining_seconds % 60)
+
+        time_parts = []
+        if hours > 0:
+            time_parts.append(f"{hours} hour{'s' if hours > 1 else ''}")
+        if minutes > 0:
+            time_parts.append(f"{minutes} minute{'s' if minutes > 1 else ''}")
+        if seconds > 0:
+            time_parts.append(f"{seconds} second{'s' if seconds > 1 else ''}")
+        
+        return " ".join(time_parts)

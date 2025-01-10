@@ -15,8 +15,8 @@ class Scheduler:
         self.events_client: boto3.client = boto3.client('events')
         self.lambda_client: boto3.client = boto3.client('lambda') 
 
-    def _is_in_cooldown(self) -> bool:
-        """Check if the function is in a cooldown state."""
+    def _is_in_cooldown(self) -> Tuple[bool, Optional[float]]:
+        """Check if the function is in a cooldown state and return the remaining time in seconds if active."""
         try:
             response = self.lambda_client.get_function_configuration(FunctionName=self.lambda_arn)
             env_vars = response.get('Environment', {}).get('Variables', {})
@@ -24,7 +24,7 @@ class Scheduler:
             
             if not cooldown_end_time_str:
                 LOGGER.info("No cooldown end time set. Cooldown is not active.")
-                return False
+                return False, None
             
             cooldown_end_time = datetime.fromisoformat(cooldown_end_time_str).replace(tzinfo=pytz.utc)
             now_utc = datetime.now(pytz.utc)
@@ -34,14 +34,14 @@ class Scheduler:
             if now_utc < cooldown_end_time:
                 remaining_time = (cooldown_end_time - now_utc).total_seconds()
                 LOGGER.info(f"Cooldown is active. Remaining time: {remaining_time:.0f} seconds.")
-                return True
+                return True, remaining_time
 
             LOGGER.info("Cooldown period has expired. Cooldown is not active.")
-            return False
+            return False, None
 
         except Exception as e:
             LOGGER.error(f"Unexpected error while checking cooldown status: {e}")
-            return False
+            return False, None
 
     def _convert_datetime_to_cron_expression(
         self, 
@@ -188,7 +188,9 @@ class Scheduler:
 
     def schedule_next_invocation(self) -> None:
         """Schedule the next invocation based on current conditions."""
-        if self._is_in_cooldown():
+        is_in_cooldown, _ = self._is_in_cooldown()
+
+        if is_in_cooldown:
             LOGGER.info("Skipping schedule due to active cooldown.")
             return
 

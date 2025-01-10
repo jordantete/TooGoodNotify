@@ -86,9 +86,11 @@ class TelegramBotHandler:
     
     async def _bot_status_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         LOGGER.info("Checking if the bot is paused.")
-        
-        if self.scheduler._is_in_cooldown():
-            message = self._get_localized_text("bot_is_paused_message")
+        is_in_cooldown, remaining_time = self.scheduler._is_in_cooldown()
+
+        if is_in_cooldown:
+            remaining_time_str = Utils.format_remaining_time(remaining_time)
+            message = self._get_localized_text("bot_is_paused_message").format(remaining_time=remaining_time_str)
         else:
             message = self._get_localized_text("bot_is_active_message")
         
@@ -202,9 +204,7 @@ class TelegramBotHandler:
 
         new_env_vars = {"USER_LANGUAGE": selected_language}
         Utils.update_lambda_env_vars(self.lambda_arn, new_env_vars)
-        self.user_language = selected_language    
-        self.localizable_strings = Utils.load_localizable_data()
-
+        self.user_language = selected_language
         await query.answer()
         text = self._get_localized_text("language-message").format(language=LANGUAGE_OPTIONS[selected_language])
         await context.bot.send_message(chat_id=chat_id, text=text, parse_mode=ParseMode.HTML)

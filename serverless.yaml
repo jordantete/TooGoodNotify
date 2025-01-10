@@ -45,7 +45,8 @@ provider:
     TELEGRAM_CHAT_ID: ${env:TELEGRAM_CHAT_ID}
     LAMBDA_MONITORING_ARN: ${env:LAMBDA_MONITORING_ARN}
     USER_AWS_ACCOUNT_ID: ${env:USER_AWS_ACCOUNT_ID}
-    COOLDOWN_END_TIME: "" # Leave empty - Managed by the Scheduler class
+    USER_LANGUAGE: ${env:USER_LANGUAGE}
+    COOLDOWN_END_TIME: ${env:COOLDOWN_END_TIME}
 
 functions:
   tooGoodNotifyScheduler:
