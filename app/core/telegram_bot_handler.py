@@ -13,10 +13,10 @@ CALLBACK_DATA_START = "start"
 CALLBACK_DATA_HELP = "help"
 CALLBACK_DATA_SETTINGS = "settings"
 CALLBACK_DATA_PAUSE_BOT = "pause"
-CALLBACK_DATA_IS_BOT_PAUSED = "is-bot-paused"
-CALLBACK_DATA_WAKE_UP_BOT = "wake-up"
+CALLBACK_DATA_IS_BOT_PAUSED = "isbotpaused"
+CALLBACK_DATA_WAKE_UP_BOT = "wakeup"
 CALLBACK_DATA_ABOUT = "about"
-CALLBACK_DATA_LANGUAGE = "language"
+CALLBACK_DATA_LANGUAGE = "languagesettings"
 LANGUAGE_OPTIONS = {"en": "🇬🇧 English", "fr": "🇫🇷 Français"}
 
 class TelegramBotHandler:
@@ -105,12 +105,14 @@ class TelegramBotHandler:
     async def _pause_bot_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle the pause_bot command."""
         LOGGER.info("Pause bot command received.")
+        buttons = [
+            [InlineKeyboardButton(f"{i} mins", callback_data=f"cooldown_{i}") for i in [10, 15, 30, 60]],
+            [InlineKeyboardButton(self._get_localized_text("pause_button_custom"), callback_data="cooldown_custom")]
+        ]
         
-        buttons = [InlineKeyboardButton(f"{i} mins", callback_data=f"cooldown_{i}") for i in [10, 15, 30, 60]]
-        buttons.append(InlineKeyboardButton(self._get_localized_text("pause_button_custom"), callback_data="cooldown_custom"))
-        
-        reply_markup = InlineKeyboardMarkup([buttons])
+        reply_markup = InlineKeyboardMarkup(buttons)
         text = self._get_localized_text("pause_bot_message")
+        
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     
     async def _cooldown_button_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -209,31 +211,39 @@ class TelegramBotHandler:
         """Handle button presses (Help, Settings, etc.)."""
         query = update.callback_query
         await query.answer()
+        callback_data = query.data
 
-        if query.data == CALLBACK_DATA_HELP:
-            LOGGER.info("Help button clicked.")
-            await self._help_handler(update, context)
-        elif query.data == CALLBACK_DATA_SETTINGS:
-            LOGGER.info("Settings button clicked.")
-            await self._settings_handler(update, context)
-        elif query.data == CALLBACK_DATA_START:
-            LOGGER.info("Start button clicked.")
-            await self._start_handler(update, context)
-        elif query.data == CALLBACK_DATA_PAUSE_BOT:
-            LOGGER.info("Register Account button clicked.")
-            await self._pause_bot_handler(update, context)
-        elif query.data == CALLBACK_DATA_IS_BOT_PAUSED:
-            LOGGER.info("Check if bot is paused button clicked.")
-            await self._check_bot_paused_handler(update, context)
-        elif query.data == CALLBACK_DATA_WAKE_UP_BOT:
-            LOGGER.info("Wake up bot button clicked.")
-            await self._wake_up_bot_handler(update, context)
-        elif query.data == "language_settings":
-            LOGGER.info("Change language button clicked.")
-            await self._language_handler(update, context)
+        if callback_data.startswith("cooldown_"):
+            cooldown_minutes = int(callback_data.split("_")[1])
+            await self._activate_cooldown(update, context, cooldown_minutes)
+        elif callback_data == "cooldown_custom":
+            await query.answer()
+            await self._ask_for_custom_cooldown(update, context)
         else:
-            LOGGER.warning(f"Unhandled callback data: {query.data}")
-            await context.bot.send_message(chat_id=query.message.chat_id, text=self._get_localized_text("unhandled-action"), parse_mode=ParseMode.HTML)
+            if callback_data == CALLBACK_DATA_HELP:
+                LOGGER.info("Help button clicked.")
+                await self._help_handler(update, context)
+            elif callback_data == CALLBACK_DATA_SETTINGS:
+                LOGGER.info("Settings button clicked.")
+                await self._settings_handler(update, context)
+            elif callback_data == CALLBACK_DATA_START:
+                LOGGER.info("Start button clicked.")
+                await self._start_handler(update, context)
+            elif callback_data == CALLBACK_DATA_PAUSE_BOT:
+                LOGGER.info("Register Account button clicked.")
+                await self._pause_bot_handler(update, context)
+            elif callback_data == CALLBACK_DATA_IS_BOT_PAUSED:
+                LOGGER.info("Check if bot is paused button clicked.")
+                await self._is_bot_paused_handler(update, context)
+            elif callback_data == CALLBACK_DATA_WAKE_UP_BOT:
+                LOGGER.info("Wake up bot button clicked.")
+                await self._wake_up_bot_handler(update, context)
+            elif callback_data == CALLBACK_DATA_LANGUAGE:
+                LOGGER.info("Change language button clicked.")
+                await self._language_handler(update, context)
+            else:
+                LOGGER.warning(f"Unhandled callback data: {callback_data}")
+                await context.bot.send_message(chat_id=query.message.chat_id, text=self._get_localized_text("unhandled-action"), parse_mode=ParseMode.HTML)
 
     def _get_localized_text(self, message_key: str) -> str:
         """Retrieve localized text based on the user's selected language."""
@@ -245,7 +255,7 @@ class TelegramBotHandler:
             BotCommand("start", self._get_localized_text("command_start")),
             BotCommand("settings", self._get_localized_text("command_settings")),
             BotCommand("pause", self._get_localized_text("command_pause_bot")),
-            BotCommand("wake-up", self._get_localized_text("command_wake_up_bot")),
+            BotCommand("wakeup", self._get_localized_text("command_wake_up_bot")),
             BotCommand("help", self._get_localized_text("command_help")),
             BotCommand("about", self._get_localized_text("command_about")),
         ]
