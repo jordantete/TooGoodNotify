@@ -19,7 +19,6 @@ class TestTgtgService:
             mock_client.get_credentials.return_value = {
                 "access_token": "new_access_token",
                 "refresh_token": "new_refresh_token",
-                "user_id": "new_user_id",
                 "cookie": "new_cookie",
             }
             mock_tgtg.return_value = mock_client
@@ -28,7 +27,6 @@ class TestTgtgService:
 
             assert tgtg_service.credentials["access_token"] == "new_access_token"
             assert tgtg_service.credentials["refresh_token"] == "new_refresh_token"
-            assert tgtg_service.credentials["user_id"] == "new_user_id"
             assert tgtg_service.credentials["cookie"] == "new_cookie"
 
     def test_retrieve_credentials_failure(self, tgtg_service):
@@ -42,7 +40,6 @@ class TestTgtgService:
             mock_instance.get_credentials.return_value = {
                 "access_token": "access_token", 
                 "refresh_token": "refresh_token", 
-                "user_id": "user_id", 
                 "cookie": "cookie"
             }
             

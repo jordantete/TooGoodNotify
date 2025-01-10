@@ -1,7 +1,8 @@
 import pytz
+from dataclasses import dataclass
 from pydantic import ValidationError
 from datetime import datetime
-from typing import Optional, List, Dict
+from typing import List, Dict, Optional
 from tgtg import TgtgClient
 from app.common.logger import LOGGER
 from app.core.database_handler import DatabaseHandler
@@ -10,54 +11,57 @@ from app.services.tgtg_service.notification_formatter import NotificationFormatt
 from app.services.tgtg_service.models import ItemDetails
 from app.services.tgtg_service.exceptions import TgtgLoginError, TgtgAPIConnectionError, TgtgAPIParsingError, ForbiddenError
 
+@dataclass
+class Credentials:
+    access_token: Optional[str]
+    refresh_token: Optional[str]
+    cookie: Optional[str]
+    last_time_token_refreshed: Optional[datetime]
+
+    def get_last_time_token_refreshed_as_str(self) -> str:
+        if self.last_time_token_refreshed:
+            return self.last_time_token_refreshed.isoformat()
+        return ""
+
 class TgtgService:
-    USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1"
+    USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1"
 
     def __init__(self):
         self.database_handler = DatabaseHandler(table_name="UserNotifications")
-        self.credentials = {}
+        self.credentials: Credentials = None
 
-    def retrieve_credentials(self, email: str) -> None:
-        """Retrieve new credentials from the TGTG API with user email."""
-        LOGGER.info("Retrieving new credentials from TGTG API.")
-        try:
-            client = TgtgClient(email=email)
-
-            LOGGER.info(f"Will request new credentials")
-
-            creds = client.get_credentials()
-
-            LOGGER.info(f"Request new credentials done")
-
-            self.credentials = {
-                'access_token': creds['access_token'],
-                'refresh_token': creds['refresh_token'],
-                'user_id': creds['user_id'],
-                'cookie': creds['cookie']
-            }
-            LOGGER.info(f"Credentials successfully retrieved and stored: access_token: {self.credentials}")
-
-        except KeyError as e:
-            raise TgtgAPIParsingError("Missing expected key in TGTG API response.") from e
-
-        except Exception as e:
-            raise TgtgLoginError(f"Failed to retrieve credentials due to an unexpected error {str(e)}")
-
-    def get_favorites_items_list(self, email: str, access_token: str, refresh_token: str, cookie: str) -> List[ItemDetails]:
+    def get_favorites_items_list(
+            self,
+            email: Optional[str], 
+            access_token: Optional[str], 
+            refresh_token: Optional[str], 
+            cookie: Optional[str],
+            last_time_token_refreshed_str: Optional[str]
+        ) -> List[ItemDetails]:
         """Login to TGTG if needed and fetch and parse favorite items from TGTG API."""
-        LOGGER.info(f"Login to TGTG API with access_token: {access_token} refresh_token: {refresh_token} cookie: {cookie}")
+        LOGGER.info(f"Login to TGTG API with email: {email}, access_token: {access_token} refresh_token: {refresh_token} cookie: {cookie}")
+        last_time_token_refreshed = datetime.fromisoformat(last_time_token_refreshed_str) if last_time_token_refreshed_str else None
+
         try: 
-            tgtg_client = TgtgClient(email=email ,access_token=access_token, refresh_token=refresh_token, cookie=cookie, user_agent=self.USER_AGENT, device_type="IPHONE")
+            tgtg_client = TgtgClient(
+                email=email, 
+                access_token=access_token, 
+                refresh_token=refresh_token, 
+                cookie=cookie, 
+                user_agent=self.USER_AGENT, 
+                last_time_token_refreshed=last_time_token_refreshed,
+                device_type="IPHONE"
+            )
+            LOGGER.info(f"TGTG Credentials: access_token={tgtg_client.access_token}, refresh_token={tgtg_client.refresh_token}, cookie={tgtg_client.cookie}, last_time_token_refreshed={tgtg_client.last_time_token_refreshed}")
 
         except Exception as e:
             raise TgtgLoginError("Unable to login with provided credentials.") from e
 
         LOGGER.info("Fetching favorite items from TGTG API.")
         try:
-            creds = tgtg_client.get_credentials()
-            LOGGER.info(f"Credentials {creds}")
-
             json_data = tgtg_client.get_favorites()
+            self.credentials = Credentials(tgtg_client.access_token, tgtg_client.refresh_token, tgtg_client.cookie, tgtg_client.last_time_token_refreshed)
+            LOGGER.info(f"Local credentials setted after recent TGTG request: {self.credentials}")
             LOGGER.info(f"Raw API response: {json_data}")
             favorites = [ItemDetails(**item) for item in json_data]
             LOGGER.info(f"Parsed {len(favorites)} favorite items from TGTG API.")

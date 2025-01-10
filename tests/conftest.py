@@ -44,7 +44,6 @@ def test_environment(monkeypatch):
         "USER_EMAIL": "test@example.com",
         "ACCESS_TOKEN": "test_access_token",
         "REFRESH_TOKEN": "test_refresh_token",
-        "USER_ID": "test_user_id",
         "TGTG_COOKIE": "test_cookie",
         "LAMBDA_MONITORING_ARN": "test_arn",
         "USER_AWS_ACCOUNT_ID": "123456789012"

@@ -9,12 +9,9 @@ class Scheduler:
     MORNING_WINDOW = ((10, 12), (10, 20))  # Morning: 10:00-12:00 with 10-20 mins delay
     AFTERNOON_WINDOW = ((12, 19), (2, 5))  # Afternoon: 12:00-19:00 with 2-5 mins delay
 
-    def __init__(
-        self, 
-        lambda_arn: Optional[str] = None
-    ):
-        """Initialize the Scheduler with optional Lambda ARN."""
-        self.lambda_arn: Optional[str] = lambda_arn or Utils.get_environment_variable("LAMBDA_MONITORING_ARN")
+    def __init__(self, ):
+        """Initialize the Scheduler."""
+        self.lambda_arn: Optional[str] = Utils.get_environment_variable("LAMBDA_MONITORING_ARN")
         self.events_client: boto3.client = boto3.client('events')
         self.lambda_client: boto3.client = boto3.client('lambda') 
 
@@ -171,23 +168,23 @@ class Scheduler:
         """Activate cooldown by updating Lambda environment variables."""
         try:
             LOGGER.info("Triggering cooldown due to anti-bot detection.")
-            response = self.lambda_client.get_function_configuration(FunctionName=self.lambda_arn)
-            current_env_vars = response['Environment']['Variables']
-            LOGGER.info(f"Current environment variables: {current_env_vars}")
-
-            new_env_vars = current_env_vars.copy()
-            cooldown_end_time = datetime.now(pytz.utc) + timedelta(minutes=cooldown_minutes)
-            new_env_vars['COOLDOWN_END_TIME'] = cooldown_end_time.isoformat()
-            LOGGER.info(f"Setting cooldown end time to: {new_env_vars['COOLDOWN_END_TIME']}")
-
-            self.lambda_client.update_function_configuration(
-                FunctionName=self.lambda_arn,
-                Environment={'Variables': new_env_vars}
-            )
+            new_env_vars = {"COOLDOWN_END_TIME": (datetime.now(pytz.utc) + timedelta(minutes=cooldown_minutes)).isoformat()}
+            Utils.update_lambda_env_vars(self.lambda_arn, new_env_vars)
             LOGGER.info("Cooldown successfully activated.")
 
         except Exception as e:
             LOGGER.error(f"Failed to activate cooldown: {e}")
+    
+    def remove_cooldown(self) -> None:
+        """Remove the cooldown by clearing the COOLDOWN_END_TIME in the Lambda environment variables."""
+        try:
+            LOGGER.info("Removing cooldown and waking up the bot.")            
+            new_env_vars = {"COOLDOWN_END_TIME": ""}
+            Utils.update_lambda_env_vars(self.lambda_arn, new_env_vars)
+            LOGGER.info("Cooldown successfully removed. The bot is now active.")
+            
+        except Exception as e:
+            LOGGER.error(f"Failed to remove cooldown: {e}")
 
     def schedule_next_invocation(self) -> None:
         """Schedule the next invocation based on current conditions."""

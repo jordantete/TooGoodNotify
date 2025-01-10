@@ -44,10 +44,6 @@ At the root of the project, create a `.env` file and add the necessary environme
   USER_EMAIL=your_user_email@example.com
   TELEGRAM_BOT_TOKEN=your_telegram_bot_token
   TELEGRAM_CHAT_ID=your_telegram_chat_id
-  ACCESS_TOKEN=your_tgtg_access_token
-  REFRESH_TOKEN=your_tgtg_refresh_token
-  USER_ID=your_tgtg_user_id
-  TGTG_COOKIE=your_tgtg_cookie
   USER_AWS_ACCOUNT_ID=your_aws_user_account_id
   LAMBDA_MONITORING_ARN=lambda_arn
   ```

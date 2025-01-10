@@ -1,4 +1,4 @@
-import os, json, requests, re
+import os, json, requests, boto3
 from typing import Optional
 from urllib.parse import quote
 from app.common.logger import LOGGER
@@ -13,6 +13,7 @@ class Utils:
     ):
         """Retrieve an environment variable, defaulting to the provided value if not found."""
         value = os.getenv(var_name, default)
+
         if value is None:
             LOGGER.warning(f"Environment variable '{var_name}' is not set and no default value was provided.")
         return value
@@ -23,10 +24,13 @@ class Utils:
         try:
             with open(LOCALIZATIONS_FILE_PATH, "r", encoding="utf-8") as file:
                 return json.load(file)
+            
         except FileNotFoundError:
             LOGGER.error(f"Localization file not found at {LOCALIZATIONS_FILE_PATH}")
+
         except json.JSONDecodeError as e:
             LOGGER.error(f"Error decoding JSON in localization file: {e}")
+
         return {}
 
     @staticmethod
@@ -71,8 +75,10 @@ class Utils:
             response = requests.get(url)
             response.raise_for_status()
             LOGGER.info(f"Telegram message sent successfully to chat_id: {chat_id}")
+
         except requests.RequestException as e:
             LOGGER.error(f"Failed to send Telegram message to chat_id: {chat_id}. Error: {e}")
+            
         except Exception as e:
             LOGGER.error(f"Unexpected error while sending Telegram message: {e}")
 
@@ -93,3 +99,25 @@ class Utils:
             'headers': {'Content-Type': 'application/json'},
             'body': json.dumps(message)
         }
+
+    @staticmethod
+    def update_lambda_env_vars(
+        lambda_arn: str, 
+        new_env_vars: dict
+    ) -> None:
+        """Update AWS Lambda environment variables with new values."""
+        try:
+            LOGGER.info(f"Updating AWS Lambda environment variables for {lambda_arn}.")
+            lambda_client = boto3.client('lambda')
+            response = lambda_client.get_function_configuration(FunctionName=lambda_arn)
+            current_env_vars = response['Environment']['Variables']
+            LOGGER.info(f"Current environment variables: {current_env_vars}")
+
+            updated_env_vars = current_env_vars.copy()
+            updated_env_vars.update(new_env_vars)
+
+            lambda_client.update_function_configuration(FunctionName=lambda_arn, Environment={'Variables': updated_env_vars})
+            LOGGER.info("AWS Lambda environment variables updated successfully.")
+
+        except Exception as e:
+            raise Exception(f"Failed to update AWS Lambda environment variables: {e}")

@@ -1,12 +1,14 @@
-import asyncio, re, json
+import asyncio, re
 from typing import Any, Dict, Union
 from app.common.logger import LOGGER
 from app.core.scheduler import Scheduler
 from app.services.tgtg_service_monitor import TgtgServiceMonitor
 from app.services.telegram_service import TelegramService
 from app.common.utils import Utils
+from dotenv import load_dotenv
 
 MONITORING_EVENT_PATTERN = r"TooGoodToGo_monitoring_invocation_rule_"
+load_dotenv()
 
 def tgtg_monitoring_handler(
     event: Dict[str, Any], 
@@ -52,8 +54,8 @@ async def run_telegram_webhook(
     """Process the Telegram webhook event asynchronously."""
     LOGGER.info(f"Telegram Webhook triggered - event: {event}")
     try:
-        tgtg_service_monitor = TgtgServiceMonitor()
-        telegram_service = TelegramService(tgtg_service_monitor)
+        scheduler = Scheduler()
+        telegram_service = TelegramService(scheduler)
         await telegram_service.process_webhook(event)
         return Utils.ok_response()
 

@@ -39,8 +39,8 @@ provider:
     USER_EMAIL: ${env:USER_EMAIL}
     ACCESS_TOKEN: ${env:ACCESS_TOKEN}
     REFRESH_TOKEN: ${env:REFRESH_TOKEN}
-    USER_ID: ${env:USER_ID}
     TGTG_COOKIE: ${env:TGTG_COOKIE}
+    LAST_TIME_TOKEN_REFRESHED: ${env:LAST_TIME_TOKEN_REFRESHED}
     TELEGRAM_BOT_TOKEN: ${env:TELEGRAM_BOT_TOKEN}
     TELEGRAM_CHAT_ID: ${env:TELEGRAM_CHAT_ID}
     LAMBDA_MONITORING_ARN: ${env:LAMBDA_MONITORING_ARN}
@@ -55,7 +55,7 @@ functions:
       - arn:aws:lambda:${self:provider.region}:${env:USER_AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
     events:
       - schedule: cron(*/3 10-19 ? * MON-SAT *)
-    timeout: 5 # seconds
+    timeout: 15 # seconds
     memorySize: 128 # mb
     description: Schedule the monitoring of TooGoodToGo items available
 

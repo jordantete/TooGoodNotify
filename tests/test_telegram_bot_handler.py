@@ -135,7 +135,6 @@ class TestTelegramBotHandler:
         mock_tgtg_service = MagicMock()
         mock_tgtg_service.access_token = "new_access_token"
         mock_tgtg_service.refresh_token = "new_refresh_token"
-        mock_tgtg_service.user_id = "new_user_id"
         mock_tgtg_service.cookie = "new_cookie"
         telegram_bot_handler.tgtg_service_monitor.tgtg_service = mock_tgtg_service
         
@@ -167,7 +166,6 @@ class TestTelegramBotHandler:
         telegram_bot_handler.tgtg_service_monitor.tgtg_service = MagicMock()
         telegram_bot_handler.tgtg_service_monitor.tgtg_service.access_token = "new_access_token"
         telegram_bot_handler.tgtg_service_monitor.tgtg_service.refresh_token = "new_refresh_token"
-        telegram_bot_handler.tgtg_service_monitor.tgtg_service.user_id = "new_user_id"
         telegram_bot_handler.tgtg_service_monitor.tgtg_service.cookie = "new_cookie"
 
         await telegram_bot_handler._register_account_handler(mock_update, mock_context)
@@ -217,7 +215,6 @@ class TestTelegramBotHandler:
         mock_tgtg_service = MagicMock()
         mock_tgtg_service.access_token = "new_access_token"
         mock_tgtg_service.refresh_token = "new_refresh_token"
-        mock_tgtg_service.user_id = "new_user_id"
         mock_tgtg_service.cookie = "new_cookie"
         telegram_bot_handler.tgtg_service_monitor.tgtg_service = mock_tgtg_service
 
@@ -226,7 +223,6 @@ class TestTelegramBotHandler:
         expected_credentials = {
             "ACCESS_TOKEN": "new_access_token",
             "REFRESH_TOKEN": "new_refresh_token",
-            "USER_ID": "new_user_id",
             "TGTG_COOKIE": "new_cookie"
         }
 

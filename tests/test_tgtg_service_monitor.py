@@ -12,7 +12,6 @@ class TestTgtgServiceMonitor:
         assert monitoring_service.user_email == test_environment["USER_EMAIL"]
         assert monitoring_service.access_token == test_environment["ACCESS_TOKEN"]
         assert monitoring_service.refresh_token == test_environment["REFRESH_TOKEN"]
-        assert monitoring_service.user_id == test_environment["USER_ID"]
         assert monitoring_service.tgtg_cookie == test_environment["TGTG_COOKIE"]
 
     def test_start_monitoring_success(self, monitoring_service, mock_scheduler):
@@ -22,7 +21,6 @@ class TestTgtgServiceMonitor:
         with patch.object(monitoring_service, '_are_credentials_valid', return_value=True), patch.object(monitoring_service, '_monitor_favorites') as mock_monitor_favorites:
             monitoring_service.access_token = "test_access_token"
             monitoring_service.refresh_token = "test_refresh_token"
-            monitoring_service.user_id = "test_user_id"
             monitoring_service.tgtg_cookie = "test_tgtg_cookie"
             
             monitoring_service.start_monitoring(mock_scheduler)
@@ -34,7 +32,7 @@ class TestTgtgServiceMonitor:
             monitoring_service.start_monitoring(mock_scheduler)
         
         mock_logger.assert_any_call('Missing or invalid credentials. Please ensure that all your environment variables are set correctly.')
-        mock_logger.assert_any_call('Current credentials are: user_email: test@example.com, access_token: test_access_token, refresh_token: test_refresh_token, user_id: test_user_id, tgtg_cookie: test_cookie')
+        mock_logger.assert_any_call('Current credentials are: user_email: test@example.com, access_token: test_access_token, refresh_token: test_refresh_token, tgtg_cookie: test_cookie')
         
     def test_retrieve_tgtg_credentials_success(self, monitoring_service):
         with patch("app.services.tgtg_service_monitor.TgtgService") as mock_tgtg_service:
