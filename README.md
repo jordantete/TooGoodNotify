@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
+
 <p align="center">
   <img src="https://github.com/pownedjojo/TooGoodNotify/assets/2340374/f62f2f94-957d-4279-8c77-3214b687299b" alt="MarineGEO circle logo" style="height: 150px; width:150px;"/>
 </p>
@@ -44,8 +45,8 @@ At the root of the project, create a `.env` file and add the necessary environme
   USER_EMAIL=your_user_email@example.com
   TELEGRAM_BOT_TOKEN=your_telegram_bot_token
   TELEGRAM_CHAT_ID=your_telegram_chat_id
-  USER_AWS_ACCOUNT_ID=your_aws_user_account_id
-  LAMBDA_MONITORING_ARN=lambda_arn
+  AWS_ACCOUNT_ID=your_aws_user_account_id
+  DEFAULT_AWS_REGION=your_aws_region
   ```
 
 4. **Creating the Lambda Layer**:

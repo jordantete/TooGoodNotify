@@ -29,7 +29,9 @@ class TelegramBotHandler:
         self.localizable_strings = Utils.load_localizable_data()
         self.chat_id = Utils.get_environment_variable("TELEGRAM_CHAT_ID")
         self.user_language = Utils.get_environment_variable("USER_LANGUAGE", default="en")
-        self.lambda_arn: Optional[str] = Utils.get_environment_variable("LAMBDA_MONITORING_ARN")
+        aws_account_id = Utils.get_environment_variable("AWS_ACCOUNT_ID")
+        aws_region = Utils.get_environment_variable("DEFAULT_AWS_REGION")
+        self.telegram_lambda_arn = f"arn:aws:lambda:{aws_region}:{aws_account_id}:function:too-good-notify-telegram-webhook"
         self.scheduler = scheduler
         self._register_handlers()
         LOGGER.info(f"TelegramBotHandler initialized with: user_language={self.user_language}")
@@ -203,7 +205,7 @@ class TelegramBotHandler:
         chat_id = update.effective_chat.id
 
         new_env_vars = {"USER_LANGUAGE": selected_language}
-        Utils.update_lambda_env_vars(self.lambda_arn, new_env_vars)
+        Utils.update_lambda_env_vars(self.telegram_lambda_arn, new_env_vars)
         self.user_language = selected_language
         await query.answer()
         text = self._get_localized_text("language-message").format(language=LANGUAGE_OPTIONS[selected_language])
@@ -217,9 +219,11 @@ class TelegramBotHandler:
 
         if callback_data.startswith("cooldown_"):
             if callback_data == "cooldown_custom":
+                LOGGER.info("Set custom cooldown value button clicked")
                 await self._ask_for_custom_cooldown(update, context)
             else:
                 cooldown_minutes = int(callback_data.split("_")[1])
+                LOGGER.info(f"Cooldown value in minutes set to: {cooldown_minutes}")
                 await self._activate_cooldown(update, context, cooldown_minutes)
         else:
             if callback_data == CALLBACK_DATA_HELP:
@@ -231,11 +235,14 @@ class TelegramBotHandler:
             elif callback_data == CALLBACK_DATA_START:
                 LOGGER.info("Start button clicked.")
                 await self._start_handler(update, context)
+            elif callback_data == CALLBACK_DATA_ABOUT:
+                LOGGER.info("About button clicked.")
+                await self._about_handler(update, context)
             elif callback_data == CALLBACK_DATA_PAUSE_BOT:
-                LOGGER.info("Register Account button clicked.")
+                LOGGER.info("Pause button clicked.")
                 await self._pause_bot_handler(update, context)
             elif callback_data == CALLBACK_DATA_BOT_STATUS:
-                LOGGER.info("Check if bot is paused button clicked.")
+                LOGGER.info("Check bot status button clicked.")
                 await self._bot_status_handler(update, context)
             elif callback_data == CALLBACK_DATA_WAKE_UP_BOT:
                 LOGGER.info("Wake up bot button clicked.")

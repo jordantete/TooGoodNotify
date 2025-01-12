@@ -45,8 +45,8 @@ def test_environment(monkeypatch):
         "ACCESS_TOKEN": "test_access_token",
         "REFRESH_TOKEN": "test_refresh_token",
         "TGTG_COOKIE": "test_cookie",
-        "LAMBDA_MONITORING_ARN": "test_arn",
-        "USER_AWS_ACCOUNT_ID": "123456789012"
+        "DEFAULT_AWS_REGION": "aws_region",
+        "AWS_ACCOUNT_ID": "123456789012"
     }
     for key, value in env_vars.items():
         monkeypatch.setenv(key, value)

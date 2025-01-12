@@ -4,7 +4,7 @@ provider:
   name: aws
   runtime: python3.10
   stage: dev
-  region: eu-west-3
+  region: ${env:DEFAULT_AWS_REGION}
   versionFunctions: false
   iam:
     role:
@@ -28,13 +28,15 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource:
-            - "arn:aws:dynamodb:${self:provider.region}:${env:USER_AWS_ACCOUNT_ID}:table/UserNotifications"
+            - "arn:aws:dynamodb:${self:provider.region}:${env:AWS_ACCOUNT_ID}:table/UserNotifications"
         - Effect: Allow
           Action:
             - lambda:GetFunctionConfiguration
             - lambda:UpdateFunctionConfiguration
           Resource:
-            - ${env:LAMBDA_MONITORING_ARN}
+            - "arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:function:too-good-notify-scheduler"
+            - "arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:function:too-good-notify-monitoring"
+            - "arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:function:too-good-notify-telegram-webhook"
   environment:
     USER_EMAIL: ${env:USER_EMAIL}
     ACCESS_TOKEN: ${env:ACCESS_TOKEN}
@@ -43,8 +45,8 @@ provider:
     LAST_TIME_TOKEN_REFRESHED: ${env:LAST_TIME_TOKEN_REFRESHED}
     TELEGRAM_BOT_TOKEN: ${env:TELEGRAM_BOT_TOKEN}
     TELEGRAM_CHAT_ID: ${env:TELEGRAM_CHAT_ID}
-    LAMBDA_MONITORING_ARN: ${env:LAMBDA_MONITORING_ARN}
-    USER_AWS_ACCOUNT_ID: ${env:USER_AWS_ACCOUNT_ID}
+    AWS_ACCOUNT_ID: ${env:AWS_ACCOUNT_ID}
+    DEFAULT_AWS_REGION: ${env:DEFAULT_AWS_REGION}
     USER_LANGUAGE: ${env:USER_LANGUAGE}
     COOLDOWN_END_TIME: ${env:COOLDOWN_END_TIME}
 
@@ -53,7 +55,7 @@ functions:
     name: too-good-notify-scheduler
     handler: app.handlers.lambda_scheduler
     layers:
-      - arn:aws:lambda:${self:provider.region}:${env:USER_AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
+      - arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
     events:
       - schedule: cron(*/3 10-19 ? * MON-SAT *)
     timeout: 15 # seconds
@@ -64,7 +66,7 @@ functions:
       name: too-good-notify-monitoring
       handler: app.handlers.tgtg_monitoring_handler
       layers:
-        - arn:aws:lambda:${self:provider.region}:${env:USER_AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
+        - arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
       events:
         - eventBridge:
             pattern:
@@ -80,7 +82,7 @@ functions:
     name: too-good-notify-telegram-webhook
     handler: app.handlers.telegram_webhook_handler
     layers:
-      - arn:aws:lambda:${self:provider.region}:${env:USER_AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
+      - arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
     events:
       - http:
           path: /
@@ -128,4 +130,5 @@ custom:
   pythonRequirements:
     dockerizePip: false
     slim: true  
-    noDeploy: ['boto3', 'botocore']
+  dotenv:
+    path: .env 

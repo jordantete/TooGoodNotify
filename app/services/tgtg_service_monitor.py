@@ -12,7 +12,9 @@ class TgtgServiceMonitor:
         self.refresh_token: Optional[str] = Utils.get_environment_variable("REFRESH_TOKEN")
         self.tgtg_cookie: Optional[str] = Utils.get_environment_variable("TGTG_COOKIE")
         self.last_time_token_refreshed: Optional[str] = Utils.get_environment_variable("LAST_TIME_TOKEN_REFRESHED")
-        self.lambda_arn: Optional[str] = Utils.get_environment_variable("LAMBDA_MONITORING_ARN")
+        aws_account_id = Utils.get_environment_variable("AWS_ACCOUNT_ID")
+        aws_region = Utils.get_environment_variable("DEFAULT_AWS_REGION")
+        self.monitoring_lambda_arn = f"arn:aws:lambda:{aws_region}:{aws_account_id}:function:too-good-notify-monitoring"
         self.tgtg_service = TgtgService()
     
     def start_monitoring(self, scheduler: Scheduler) -> None:
@@ -96,4 +98,4 @@ class TgtgServiceMonitor:
             "TGTG_COOKIE": new_credentials.cookie,
             "LAST_TIME_TOKEN_REFRESHED": new_credentials.get_last_time_token_refreshed_as_str()
         }
-        Utils.update_lambda_env_vars(self.lambda_arn, new_env_vars)
+        Utils.update_lambda_env_vars(self.monitoring_lambda_arn, new_env_vars)

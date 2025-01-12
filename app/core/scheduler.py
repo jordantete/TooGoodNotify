@@ -11,14 +11,16 @@ class Scheduler:
 
     def __init__(self, ):
         """Initialize the Scheduler."""
-        self.lambda_arn: Optional[str] = Utils.get_environment_variable("LAMBDA_MONITORING_ARN")
+        aws_account_id = Utils.get_environment_variable("AWS_ACCOUNT_ID")
+        aws_region = Utils.get_environment_variable("DEFAULT_AWS_REGION")
+        self.monitoring_lambda_arn = f"arn:aws:lambda:{aws_region}:{aws_account_id}:function:too-good-notify-monitoring"
         self.events_client: boto3.client = boto3.client('events')
         self.lambda_client: boto3.client = boto3.client('lambda') 
 
     def _is_in_cooldown(self) -> Tuple[bool, Optional[float]]:
         """Check if the function is in a cooldown state and return the remaining time in seconds if active."""
         try:
-            response = self.lambda_client.get_function_configuration(FunctionName=self.lambda_arn)
+            response = self.lambda_client.get_function_configuration(FunctionName=self.monitoring_lambda_arn)
             env_vars = response.get('Environment', {}).get('Variables', {})
             cooldown_end_time_str = env_vars.get('COOLDOWN_END_TIME')
             
@@ -155,7 +157,7 @@ class Scheduler:
         """Create a new CloudWatch Events rule and target."""
         try:
             self.events_client.put_rule(Name=rule_name, ScheduleExpression=cron_expression, State='ENABLED')
-            self.events_client.put_targets(Rule=rule_name, Targets=[{'Id': '1', 'Arn': self.lambda_arn}])
+            self.events_client.put_targets(Rule=rule_name, Targets=[{'Id': '1', 'Arn': self.monitoring_lambda_arn}])
             LOGGER.info(f"Created rule {rule_name} with CRON expression {cron_expression}")
 
         except Exception as e:
@@ -169,7 +171,7 @@ class Scheduler:
         try:
             LOGGER.info("Triggering cooldown due to anti-bot detection.")
             new_env_vars = {"COOLDOWN_END_TIME": (datetime.now(pytz.utc) + timedelta(minutes=cooldown_minutes)).isoformat()}
-            Utils.update_lambda_env_vars(self.lambda_arn, new_env_vars)
+            Utils.update_lambda_env_vars(self.monitoring_lambda_arn, new_env_vars)
             LOGGER.info("Cooldown successfully activated.")
 
         except Exception as e:
@@ -180,7 +182,7 @@ class Scheduler:
         try:
             LOGGER.info("Removing cooldown and waking up the bot.")            
             new_env_vars = {"COOLDOWN_END_TIME": ""}
-            Utils.update_lambda_env_vars(self.lambda_arn, new_env_vars)
+            Utils.update_lambda_env_vars(self.monitoring_lambda_arn, new_env_vars)
             LOGGER.info("Cooldown successfully removed. The bot is now active.")
             
         except Exception as e:

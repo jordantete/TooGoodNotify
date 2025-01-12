@@ -24,7 +24,9 @@ class TestScheduler:
                 }
             }
         }
-        assert scheduler._is_in_cooldown() is True
+        is_in_cooldown, remaining_time = scheduler._is_in_cooldown()
+        assert is_in_cooldown is True
+        assert remaining_time == pytest.approx(900, abs=1)  # Allowing a 1 second tolerance
 
     def test_is_in_cooldown_expired(self, scheduler):
         past_time = datetime.now(pytz.utc) - timedelta(minutes=15)
@@ -35,7 +37,9 @@ class TestScheduler:
                 }
             }
         }
-        assert scheduler._is_in_cooldown() is False
+        is_in_cooldown, remaining_time = scheduler._is_in_cooldown()
+        assert is_in_cooldown is False
+        assert remaining_time is None
 
     def test_convert_datetime_to_cron_expression(self, scheduler):
         dt = datetime(2024, 3, 20, 14, 30, tzinfo=pytz.UTC)
@@ -85,7 +89,8 @@ class TestScheduler:
         with freeze_time(sunday):
             assert scheduler._calculate_next_invocation_time() is None
 
-    def test_activate_cooldown(self, scheduler):
+    @patch('app.common.utils.Utils.update_lambda_env_vars')
+    def test_activate_cooldown(self, mock_update_lambda_env_vars, scheduler):
         current_vars = {'EXISTING_VAR': 'value'}
         scheduler.lambda_client.get_function_configuration.return_value = {
             'Environment': {'Variables': current_vars}
@@ -93,20 +98,20 @@ class TestScheduler:
 
         scheduler.activate_cooldown(cooldown_minutes=30)
 
-        call_args = scheduler.lambda_client.update_function_configuration.call_args[1]
-        new_vars = call_args['Environment']['Variables']
+        mock_update_lambda_env_vars.assert_called_once()
+        call_args = mock_update_lambda_env_vars.call_args[0]
+        new_vars = call_args[1]      
         assert 'COOLDOWN_END_TIME' in new_vars
-        assert 'EXISTING_VAR' in new_vars
 
     def test_schedule_next_invocation_with_cooldown(self, scheduler):
-        scheduler._is_in_cooldown = MagicMock(return_value=True)
+        scheduler._is_in_cooldown = MagicMock(return_value=(True, 1234))
         scheduler.schedule_next_invocation()
         scheduler.events_client.put_rule.assert_not_called()
 
     def test_schedule_next_invocation_with_existing_future_rule(self, scheduler):
-        scheduler._is_in_cooldown = MagicMock(return_value=False)
+        scheduler._is_in_cooldown = MagicMock(return_value=(False, None))
         scheduler._has_future_invocation = MagicMock(return_value=True)
-        
+
         scheduler.schedule_next_invocation()
-        
-        scheduler.events_client.put_rule.assert_not_called() 
+
+        scheduler.events_client.put_rule.assert_not_called()
