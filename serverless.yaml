@@ -55,7 +55,7 @@ functions:
     name: too-good-notify-scheduler
     handler: app.handlers.lambda_scheduler
     layers:
-      - arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
+      - arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:3
     events:
       - schedule: cron(*/3 10-19 ? * MON-SAT *)
     timeout: 15 # seconds
@@ -66,7 +66,7 @@ functions:
       name: too-good-notify-monitoring
       handler: app.handlers.tgtg_monitoring_handler
       layers:
-        - arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
+        - arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:3
       events:
         - eventBridge:
             pattern:
@@ -82,7 +82,7 @@ functions:
     name: too-good-notify-telegram-webhook
     handler: app.handlers.telegram_webhook_handler
     layers:
-      - arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:2
+      - arn:aws:lambda:${self:provider.region}:${env:AWS_ACCOUNT_ID}:layer:TooGoodNotifyLayer:3
     events:
       - http:
           path: /
