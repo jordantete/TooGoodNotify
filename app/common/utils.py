@@ -107,7 +107,7 @@ class Utils:
     ) -> None:
         """Update AWS Lambda environment variables with new values."""
         try:
-            LOGGER.info(f"Updating AWS Lambda environment variables for {lambda_arn}.")
+            LOGGER.info(f"Updating AWS Lambda environment variables for {lambda_arn} - new_env_vars: {new_env_vars}")
             lambda_client = boto3.client('lambda')
             response = lambda_client.get_function_configuration(FunctionName=lambda_arn)
             current_env_vars = response['Environment']['Variables']

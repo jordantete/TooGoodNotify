@@ -75,7 +75,7 @@ class TgtgServiceMonitor:
             Utils.send_telegram_message(f"TgtgAPIParsingError: {error_msg}")
 
         except ForbiddenError as e:
-            LOGGER.error(f"ForbiddenError: {str(e)}")
+            LOGGER.error(str(e))
             scheduler.activate_cooldown()
             Utils.send_telegram_message("API access forbidden. Monitoring paused temporarily.")
 
