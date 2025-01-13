@@ -4,4 +4,3 @@ python_dateutil
 pytz
 python-dotenv
 requests
-tgtg

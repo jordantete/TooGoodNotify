@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from pydantic import ValidationError
 from datetime import datetime
 from typing import List, Dict, Optional
-from tgtg import TgtgClient
 from app.common.logger import LOGGER
 from app.core.database_handler import DatabaseHandler
 from app.core.exceptions import DatabaseQueryError
+from app.services.tgtg_service.tgtg_client import TgtgClient
 from app.services.tgtg_service.notification_formatter import NotificationFormatter
 from app.services.tgtg_service.models import ItemDetails
 from app.services.tgtg_service.exceptions import TgtgLoginError, TgtgAPIConnectionError, TgtgAPIParsingError, ForbiddenError
@@ -39,7 +39,7 @@ class TgtgService:
             last_time_token_refreshed_str: Optional[str]
         ) -> List[ItemDetails]:
         """Login to TGTG if needed and fetch and parse favorite items from TGTG API."""
-        LOGGER.info(f"Login to TGTG API with email: {email}, access_token: {access_token} refresh_token: {refresh_token} cookie: {cookie}")
+        LOGGER.info(f"Login to TGTG API with \nemail: {email}\naccess_token: {access_token}\nrefresh_token: {refresh_token}\ncookie: {cookie}")
         last_time_token_refreshed = datetime.fromisoformat(last_time_token_refreshed_str) if last_time_token_refreshed_str else None
 
         try: 

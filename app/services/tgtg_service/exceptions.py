@@ -40,3 +40,9 @@ class ForbiddenError(TgtgAPIConnectionError):
     """Raised when the API returns a 403 Forbidden error."""
     def __init__(self, message: str = "Access forbidden (403). Anti-bot detection triggered.", *args):
         super().__init__(message, status_code=403, *args)
+
+class TgtgAPIError(Exception):
+    pass
+
+class TgtgPollingError(Exception):
+    pass

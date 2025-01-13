@@ -16,6 +16,5 @@ dependencies:
     - pytz
     - python-dotenv
     - requests
-    - tgtg
     - pytest-freezegun
     - freezegun
