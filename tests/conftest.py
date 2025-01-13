@@ -29,28 +29,10 @@ def mock_scheduler():
 @pytest.fixture
 def mock_monitoring_service():
     mock_service = MagicMock(spec=TgtgServiceMonitor)
-    # Add the required methods to the mock
     mock_service._retrieve_and_login = MagicMock()
     mock_service.check_credentials_ready = MagicMock()
     mock_service.update_lambda_env_vars = MagicMock()
     return mock_service
-
-@pytest.fixture(autouse=True)
-def test_environment(monkeypatch):
-    """Set up test environment variables."""
-    env_vars = {
-        "TELEGRAM_BOT_TOKEN": "test_token",
-        "TELEGRAM_CHAT_ID": "123456789",
-        "USER_EMAIL": "test@example.com",
-        "ACCESS_TOKEN": "test_access_token",
-        "REFRESH_TOKEN": "test_refresh_token",
-        "TGTG_COOKIE": "test_cookie",
-        "DEFAULT_AWS_REGION": "aws_region",
-        "AWS_ACCOUNT_ID": "123456789012"
-    }
-    for key, value in env_vars.items():
-        monkeypatch.setenv(key, value)
-    return env_vars 
 
 @pytest.fixture
 def mock_item_details():
