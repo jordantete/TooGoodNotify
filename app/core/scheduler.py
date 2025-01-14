@@ -187,6 +187,11 @@ class Scheduler:
             
         except Exception as e:
             LOGGER.error(f"Failed to remove cooldown: {e}")
+    
+    def is_bot_paused(self) -> bool:
+        """Check if the bot is paused."""
+        is_in_cooldown, _ = self._is_in_cooldown()
+        return is_in_cooldown
 
     def schedule_next_invocation(self) -> None:
         """Schedule the next invocation based on current conditions."""

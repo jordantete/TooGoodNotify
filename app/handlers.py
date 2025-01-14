@@ -19,8 +19,10 @@ def tgtg_monitoring_handler(
 
     if _is_monitoring_event(event):
         scheduler = Scheduler()
-        tgtg_service_monitor = TgtgServiceMonitor()
-        tgtg_service_monitor.start_monitoring(scheduler)
+
+        if not scheduler.is_bot_paused():
+            tgtg_service_monitor = TgtgServiceMonitor()
+            tgtg_service_monitor.start_monitoring(scheduler)
     else:
         LOGGER.info("Monitoring TGTG not launched - wrong scheduling event")
 
